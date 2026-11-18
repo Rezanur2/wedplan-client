@@ -11,7 +11,7 @@ const navLinks = [
   { name: "Home", href: "/" },
   { name: "Browse Services", href: "/services" },
   { name: "Categories", href: "/#categories" },
-  { name: "Become a Vendor", href: "/sign-up?role=vendor" },
+  { name: "Become a Vendor", href: "/signup?role=vendor" },
 ];
 
 export default function Navbar() {
@@ -149,13 +149,13 @@ export default function Navbar() {
             /* Sign In and Sign Up */
             <>
               <Link
-                href="/sign-in"
+                href="/signin"
                 className="px-3 py-1.5 text-sm font-medium text-stone-700 hover:text-stone-950"
               >
                 Sign In
               </Link>
               <Link
-                href="/sign-up"
+                href="/signup"
                 className="rounded-md bg-[#844353] px-4 py-2 text-sm font-medium text-white hover:bg-[#723645]"
               >
                 Sign Up
@@ -247,14 +247,14 @@ export default function Navbar() {
             ) : (
               <div className="flex flex-col gap-2">
                 <Link
-                  href="/sign-in"
+                  href="/signin"
                   onClick={() => setIsOpen(false)}
                   className="w-full rounded-md border border-stone-200 bg-white py-2 text-center text-sm font-medium text-stone-800"
                 >
                   Sign In
                 </Link>
                 <Link
-                  href="/sign-up"
+                  href="/signup"
                   onClick={() => setIsOpen(false)}
                   className="w-full rounded-md bg-[#844353] py-2 text-center text-sm font-medium text-white"
                 >

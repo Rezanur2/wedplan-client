@@ -26,7 +26,7 @@ export default function Banner() {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
-    // console.log("Data From the form", data);
+    console.log("Data From the form", data);
   };
    
   return (
@@ -74,7 +74,7 @@ export default function Banner() {
           </Link>
 
           <Link
-            href="/sign-up?role=vendor"
+            href="/signup?role=vendor"
             className="inline-flex items-center rounded-lg border border-white/20 bg-white/10 px-6 py-3 text-sm font-medium text-white backdrop-blur-xs transition-all hover:bg-white/20"
           >
             Join as a Vendor
