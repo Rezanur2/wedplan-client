@@ -22,6 +22,13 @@ export default function Navbar() {
   // Authentication state
   const { data: session } = authClient.useSession();
   const user = session?.user;
+  const hasValidImage = Boolean(
+    user?.image &&
+      (user.image.startsWith("http://") ||
+        user.image.startsWith("https://") ||
+        user.image.startsWith("/"))
+  );
+  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : null;
 
   const handleSignOut = async () => {
     setProfileOpen(false);
@@ -118,30 +125,55 @@ export default function Navbar() {
                 className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white shadow-xs hover:bg-stone-800 transition-colors"
                 aria-label="User profile"
               >
-                {user.image ? (
+                {hasValidImage ? (
                   <Image
-                    src={user.image}
+                    src={user.image!}
                     alt={user.name || "User Avatar"}
                     width={36}
                     height={36}
                     className="h-full w-full object-cover"
                   />
+                ) : userInitial ? (
+                  <span className="font-semibold text-xs text-white uppercase select-none">
+                    {userInitial}
+                  </span>
                 ) : (
                   <User className="h-4 w-4 text-white" />
                 )}
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg border border-stone-200 bg-white p-1.5 shadow-md">
-                  <div className="border-b border-stone-100 px-3 py-2">
-                    <p className="truncate text-xs font-semibold text-stone-800">
-                      {user.name}
-                    </p>
-                    <p className="truncate text-[11px] text-stone-500">
-                      {user.email}
-                    </p>
+                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg z-50">
+                  <div className="flex items-center gap-2.5 border-b border-stone-100 px-2.5 py-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white">
+                      {hasValidImage ? (
+                        <Image
+                          src={user.image!}
+                          alt={user.name || "User Avatar"}
+                          width={32}
+                          height={32}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : userInitial ? (
+                        <span className="font-semibold text-xs text-white uppercase select-none">
+                          {userInitial}
+                        </span>
+                      ) : (
+                        <User className="h-4 w-4 text-white" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-stone-800">
+                        {user.name}
+                      </p>
+                      <p className="truncate text-[11px] text-stone-500">
+                        {user.email}
+                      </p>
+                    </div>
                   </div>
-                  {dropLinks}
+                  <div className="pt-1">
+                    {dropLinks}
+                  </div>
                 </div>
               )}
             </div>
@@ -174,30 +206,55 @@ export default function Navbar() {
                 className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white shadow-xs"
                 aria-label="User profile"
               >
-                {user.image ? (
+                {hasValidImage ? (
                   <Image
-                    src={user.image}
+                    src={user.image!}
                     alt={user.name || "User Avatar"}
                     width={32}
                     height={32}
                     className="h-full w-full object-cover"
                   />
+                ) : userInitial ? (
+                  <span className="font-semibold text-[11px] text-white uppercase select-none">
+                    {userInitial}
+                  </span>
                 ) : (
                   <User className="h-3.5 w-3.5 text-white" />
                 )}
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-lg border border-stone-200 bg-white p-1.5 shadow-md z-50">
-                  <div className="border-b border-stone-100 px-3 py-2">
-                    <p className="truncate text-xs font-semibold text-stone-800">
-                      {user.name}
-                    </p>
-                    <p className="truncate text-[11px] text-stone-500">
-                      {user.email}
-                    </p>
+                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg z-50">
+                  <div className="flex items-center gap-2.5 border-b border-stone-100 px-2.5 py-2">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white">
+                      {hasValidImage ? (
+                        <Image
+                          src={user.image!}
+                          alt={user.name || "User Avatar"}
+                          width={32}
+                          height={32}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : userInitial ? (
+                        <span className="font-semibold text-xs text-white uppercase select-none">
+                          {userInitial}
+                        </span>
+                      ) : (
+                        <User className="h-3.5 w-3.5 text-white" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-stone-800">
+                        {user.name}
+                      </p>
+                      <p className="truncate text-[11px] text-stone-500">
+                        {user.email}
+                      </p>
+                    </div>
                   </div>
-                  {dropLinks}
+                  <div className="pt-1">
+                    {dropLinks}
+                  </div>
                 </div>
               )}
             </div>
@@ -235,34 +292,24 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="mt-4 border-t border-stone-200 pt-3">
-            {user ? (
-              <div className="space-y-1">
-                <div className="px-3 py-1">
-                  <p className="text-sm font-semibold text-stone-800">{user.name}</p>
-                  <p className="text-xs text-stone-500">{user.email}</p>
-                </div>
-                {dropLinks}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <Link
-                  href="/signin"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full rounded-md border border-stone-200 bg-white py-2 text-center text-sm font-medium text-stone-800"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/signup"
-                  onClick={() => setIsOpen(false)}
-                  className="w-full rounded-md bg-[#844353] py-2 text-center text-sm font-medium text-white"
-                >
-                  Sign Up
-                </Link>
-              </div>
-            )}
-          </div>
+          {!user && (
+            <div className="mt-4 border-t border-stone-200 pt-3 flex flex-col gap-2">
+              <Link
+                href="/signin"
+                onClick={() => setIsOpen(false)}
+                className="w-full rounded-md border border-stone-200 bg-white py-2 text-center text-sm font-medium text-stone-800"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                onClick={() => setIsOpen(false)}
+                className="w-full rounded-md bg-[#844353] py-2 text-center text-sm font-medium text-white"
+              >
+                Sign Up
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </header>
