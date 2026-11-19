@@ -58,10 +58,24 @@ export default function Navbar() {
     });
   };
 
+  const dashboardHref =
+    user?.role === "admin"
+      ? "/admin"
+      : user?.role === "vendor"
+      ? "/vendor"
+      : "/customer";
+
+  const profileHref =
+    user?.role === "admin"
+      ? "/admin/profile"
+      : user?.role === "vendor"
+      ? "/vendor/profile"
+      : "/customer/profile";
+
   const dropLinks = (
     <>
       <Link
-        href="/dashboard"
+        href={dashboardHref}
         onClick={() => {
           setProfileOpen(false);
           setIsOpen(false);
@@ -72,7 +86,7 @@ export default function Navbar() {
         Dashboard
       </Link>
       <Link
-        href="/dashboard/profile"
+        href={profileHref}
         onClick={() => {
           setProfileOpen(false);
           setIsOpen(false);

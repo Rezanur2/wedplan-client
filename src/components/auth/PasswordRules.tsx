@@ -32,7 +32,7 @@ export default function PasswordRules({
           }`}
         >
           <CheckCircle2 className="h-3 w-3 shrink-0" />
-          <span className="truncate">6+ Characters</span>
+          <span className="truncate">Min 6 Characters</span>
         </div>
         <div
           className={`flex items-center gap-1.5 ${

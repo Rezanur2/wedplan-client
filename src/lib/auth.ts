@@ -22,6 +22,11 @@ export const auth = betterAuth({
                 type: ['customer', 'vendor', 'admin'],
                 input: true,
                 defaultValue: 'customer'
+            },
+            businessName: {
+                type: 'string',
+                input: true,
+                required: false,
             }
         }
     },

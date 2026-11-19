@@ -27,6 +27,7 @@ export default function SignUpForm() {
   const router = useRouter();
 
   const [role, setRole] = useState<"customer" | "vendor">("customer");
+  const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -45,6 +46,7 @@ export default function SignUpForm() {
     setError(null);
     const formData = new FormData(e.currentTarget);
     const name = String(formData.get("name") ?? "").trim();
+    const businessName = role === "vendor" ? String(formData.get("businessName") ?? "").trim() : undefined;
     const email = String(formData.get("email") ?? "").trim();
     const image = String(formData.get("image") ?? "").trim();
     const password = String(formData.get("password") ?? "");
@@ -57,7 +59,7 @@ export default function SignUpForm() {
     setEmailError(null);
 
     if (!isPasswordValid) {
-      setPasswordError("Must be 6+ chars with 1 uppercase & 1 lowercase.");
+      setPasswordError("Must be at least 6 characters with 1 uppercase and 1 lowercase letter.");
       return;
     }
     setPasswordError(null);
@@ -74,7 +76,8 @@ export default function SignUpForm() {
         password: password,
         image: image.startsWith("http") || image.startsWith("/") ? image : undefined,
         role: role,
-      });
+        ...(businessName ? { businessName } : {}),
+      } as Parameters<typeof authClient.signUp.email>[0]);
       if (error) {
         const msg = error.message ?? "Could not create your account.";
         setError(msg);
@@ -87,6 +90,7 @@ export default function SignUpForm() {
       }
       
       formElement.reset();
+      setName("");
       setPassword("");
       setFileName(null);
 
@@ -129,37 +133,37 @@ export default function SignUpForm() {
       </div>
 
       {/* Header Badge & Back to Home Link */}
-      <div className="flex items-center justify-center lg:justify-between">
+      <div className="relative flex items-center justify-center">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-[#FAF6F7] px-3.5 py-1 text-[11px] font-medium text-stone-600 shadow-2xs">
           <span className="h-1.5 w-1.5 rounded-full bg-[#844353]" />
           Membership Registration
         </span>
         <Link
           href="/"
-          className="hidden group lg:inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-[#FAF6F7] px-3 py-1 text-[11px] font-medium text-stone-700 shadow-2xs transition-all hover:border-[#844353]/40 hover:bg-white hover:text-[#844353]"
+          className="hidden absolute right-0 group lg:inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-[#FAF6F7] px-2.5 py-1 text-[11px] font-medium text-stone-700 shadow-2xs transition-all hover:border-[#844353]/40 hover:bg-white hover:text-[#844353]"
         >
           <ArrowLeft className="h-3 w-3 text-stone-500 transition-transform group-hover:-translate-x-0.5 group-hover:text-[#844353]" />
-          Back to Home
+          Home
         </Link>
       </div>
 
-      <h2 className="mt-3.5 text-center font-serif text-2xl font-medium tracking-tight text-stone-900 sm:text-3xl lg:text-left leading-snug">
+      <h2 className="mt-2.5 text-center font-serif text-2xl font-medium tracking-tight text-stone-900 sm:text-3xl leading-snug">
         Create Your <span className="hidden sm:inline">WedPlan </span>Account
       </h2>
-      <p className="mt-1.5 text-center text-xs sm:text-[13px] leading-relaxed text-stone-500 lg:text-left">
+      <p className="mt-1 text-center text-xs sm:text-[13px] leading-relaxed text-stone-500">
         Join WedPlan to plan your wedding or grow your wedding business.
       </p>
 
       {/* Role Selection */}
-      <div className="mt-5 text-left">
+      <div className="mt-3.5 text-left">
         <span className="text-[10px] font-bold tracking-wider text-stone-500 uppercase">
           I Am Joining As:
         </span>
-        <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-stone-200 bg-[#FAF6F7] p-1 text-xs font-medium">
+        <div className="mt-1.5 grid grid-cols-2 gap-2 rounded-xl border border-stone-200 bg-[#FAF6F7] p-1 text-xs font-medium">
           <button
             type="button"
             onClick={() => setRole("customer")}
-            className={`flex items-center justify-center gap-2 rounded-lg py-2 transition-colors cursor-pointer ${
+            className={`flex items-center justify-center gap-2 rounded-lg py-1.5 transition-colors cursor-pointer ${
               role === "customer"
                 ? "bg-[#844353] text-white shadow-xs font-semibold"
                 : "text-stone-600 hover:text-stone-900"
@@ -171,7 +175,7 @@ export default function SignUpForm() {
           <button
             type="button"
             onClick={() => setRole("vendor")}
-            className={`flex items-center justify-center gap-2 rounded-lg py-2 transition-colors cursor-pointer ${
+            className={`flex items-center justify-center gap-2 rounded-lg py-1.5 transition-colors cursor-pointer ${
               role === "vendor"
                 ? "bg-[#844353] text-white shadow-xs font-semibold"
                 : "text-stone-600 hover:text-stone-900"
@@ -183,34 +187,19 @@ export default function SignUpForm() {
         </div>
       </div>
 
-      {/* Google Authentication */}
-      <div className="mt-5">
-        <GoogleButton
-          label="Sign up with Google"
-          role={role}
-        />
-      </div>
-
-      {/* Divider */}
-      <div className="relative my-4 flex items-center justify-center">
-        <div className="w-full border-t border-stone-200" />
-        <span className="absolute bg-white px-3 text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
-          or register with email
-        </span>
-      </div>
-
       {/* Sign Up Form */}
-      <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3.5">
+      <form onSubmit={handleSubmit} autoComplete="off" className="space-y-2.5 mt-3.5">
         <input type="hidden" name="role" value={role} />
 
-        {/* Profile Image Upload */}
+        {/* Profile Image Upload with live initials / preview */}
         <ProfileImageUpload
+          name={name}
           fileName={fileName}
           onFileChange={(name) => setFileName(name)}
         />
 
         {/* Full Name */}
-        <div className="space-y-1.5 text-left">
+        <div className="space-y-1 text-left">
           <Label
             htmlFor="signup-name"
             className="text-xs font-medium text-stone-700"
@@ -223,15 +212,40 @@ export default function SignUpForm() {
               name="name"
               type="text"
               required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Eleanor Vance"
-              className="h-10 rounded-xl border-stone-200 bg-stone-50/50 pr-9 text-xs placeholder:text-stone-400 focus-visible:border-[#844353] focus-visible:ring-[#844353]/20"
+              className="h-9 sm:h-9.5 rounded-xl border-stone-200 bg-stone-50/50 pr-9 text-xs placeholder:text-stone-400 focus-visible:border-[#844353] focus-visible:ring-[#844353]/20"
             />
             <User className="absolute right-3 h-4 w-4 text-stone-400 pointer-events-none" />
           </div>
         </div>
 
+        {/* Business / Studio Name (Conditional for Vendor) */}
+        {role === "vendor" && (
+          <div className="space-y-1 text-left">
+            <Label
+              htmlFor="signup-business"
+              className="text-xs font-medium text-stone-700"
+            >
+              Business / Studio Name
+            </Label>
+            <div className="relative flex items-center">
+              <Input
+                id="signup-business"
+                name="businessName"
+                type="text"
+                required
+                placeholder="Rosewood Wedding Studio"
+                className="h-9 sm:h-9.5 rounded-xl border-stone-200 bg-stone-50/50 pr-9 text-xs placeholder:text-stone-400 focus-visible:border-[#844353] focus-visible:ring-[#844353]/20"
+              />
+              <Store className="absolute right-3 h-4 w-4 text-stone-400 pointer-events-none" />
+            </div>
+          </div>
+        )}
+
         {/* Email Address */}
-        <div className="space-y-1.5 text-left">
+        <div className="space-y-1 text-left">
           <Label
             htmlFor="signup-email"
             className="text-xs font-medium text-stone-700"
@@ -247,8 +261,8 @@ export default function SignUpForm() {
               onChange={() => {
                 if (emailError) setEmailError(null);
               }}
-              placeholder="name@example.com"
-              className={`h-10 rounded-xl pr-9 text-xs placeholder:text-stone-400 focus-visible:ring-[#844353]/20 ${
+              placeholder="you@example.com"
+              className={`h-9 sm:h-9.5 rounded-xl pr-9 text-xs placeholder:text-stone-400 focus-visible:ring-[#844353]/20 ${
                 emailError
                   ? "border-rose-400 bg-rose-50/20 focus-visible:border-rose-500"
                   : "border-stone-200 bg-stone-50/50 focus-visible:border-[#844353]"
@@ -267,7 +281,7 @@ export default function SignUpForm() {
         </div>
 
         {/* Password */}
-        <div className="space-y-1.5 text-left">
+        <div className="space-y-1 text-left">
           <div className="flex items-center justify-between">
             <Label
               htmlFor="signup-password"
@@ -291,7 +305,7 @@ export default function SignUpForm() {
                 if (passwordError) setPasswordError(null);
               }}
               placeholder="••••••••"
-              className={`h-10 rounded-xl pr-9 text-xs placeholder:text-stone-400 focus-visible:ring-[#844353]/20 ${
+              className={`h-9 sm:h-9.5 rounded-xl pr-9 text-xs placeholder:text-stone-400 focus-visible:ring-[#844353]/20 ${
                 passwordError
                   ? "border-rose-400 bg-rose-50/20 focus-visible:border-rose-500"
                   : "border-stone-200 bg-stone-50/50 focus-visible:border-[#844353]"
@@ -321,7 +335,7 @@ export default function SignUpForm() {
             </div>
           )}
 
-          {/* Password Requirements */}
+          {/* Password Requirements Checklist */}
           <PasswordRules
             hasMinLength={hasMinLength}
             hasUppercase={hasUppercase}
@@ -332,7 +346,7 @@ export default function SignUpForm() {
 
         {/* Form Error Alert */}
         {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 p-3 text-left text-rose-700">
+          <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/70 p-2.5 text-left text-rose-700">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <p className="text-xs font-medium leading-tight">{error}</p>
           </div>
@@ -341,15 +355,35 @@ export default function SignUpForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[#844353] py-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#723645] active:scale-[0.99] cursor-pointer"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#844353] py-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#723645] active:scale-[0.99] cursor-pointer"
         >
-          Create WedPlan Account
+          Create Account
           <ArrowRight className="h-3.5 w-3.5" />
         </button>
       </form>
 
+      {/* Divider */}
+      <div className="relative my-3 flex items-center justify-center">
+        <div className="w-full border-t border-stone-200" />
+        <span className="absolute bg-white px-3 text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
+          or continue with
+        </span>
+      </div>
+
+      {/* Google Authentication */}
+      <div>
+        <GoogleButton
+          label={
+            role === "vendor"
+              ? "Sign up with Google (Vendor)"
+              : "Sign up with Google (Customer)"
+          }
+          role={role}
+        />
+      </div>
+
       {/* Footer Navigation */}
-      <p className="mt-5 text-center text-xs text-stone-600">
+      <p className="mt-3.5 text-center text-xs text-stone-600">
         Already have an account?{" "}
         <Link
           href="/signin"
