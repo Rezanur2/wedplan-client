@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
-  Heart,
   Store,
   User,
   Mail,
@@ -48,7 +47,7 @@ export default function SignUpForm() {
     const name = String(formData.get("name") ?? "").trim();
     const email = String(formData.get("email") ?? "").trim();
     const image = String(formData.get("image") ?? "").trim();
-    const password = String(formData.get("password") ?? "").trim();
+    const password = String(formData.get("password") ?? "");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
@@ -66,20 +65,28 @@ export default function SignUpForm() {
     const data = Object.fromEntries(formData.entries());
     console.log("Sign Up Form Data:", data);
 
+    const formElement = e.currentTarget;
+
     try {
       const { data, error } = await authClient.signUp.email({
         name: name,
         email: email,
         password: password,
         image: image.startsWith("http") || image.startsWith("/") ? image : undefined,
-        callbackURL: "/",
+        role: role,
       });
       if (error) return setError(error.message ?? "Could not create your account.");
+      
+      formElement.reset();
+      setPassword("");
+      setFileName(null);
+
       toast.add({
         title: `Hello ${data.user?.name},`,
         description: "Your account has been created successfully.",
-      })
-      router.push("/signin")
+        type: "success",
+      });
+      router.push("/signin");
     } catch (err) {
       console.error(err);
     }
@@ -139,49 +146,30 @@ export default function SignUpForm() {
         <span className="text-[10px] font-bold tracking-wider text-stone-500 uppercase">
           I Am Joining As:
         </span>
-        <div className="mt-2 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-stone-200 bg-[#FAF6F7] p-1 text-xs font-medium">
           <button
             type="button"
             onClick={() => setRole("customer")}
-            className={`flex flex-col items-start rounded-xl border p-3 text-left transition-colors cursor-pointer ${
+            className={`flex items-center justify-center gap-2 rounded-lg py-2 transition-colors cursor-pointer ${
               role === "customer"
-                ? "border-[#844353] bg-[#FAF6F7] ring-1 ring-inset ring-[#844353]"
-                : "border-stone-200 bg-white hover:border-stone-300"
+                ? "bg-[#844353] text-white shadow-xs font-semibold"
+                : "text-stone-600 hover:text-stone-900"
             }`}
           >
-            <div className="flex w-full items-center justify-between">
-              <span className="text-xs font-semibold text-stone-900">
-                Customer
-              </span>
-              <Heart
-                className={`h-3.5 w-3.5 ${role === "customer" ? "text-[#844353] fill-[#844353]" : "text-stone-400"}`}
-              />
-            </div>
-            <p className="mt-1 text-[10px] text-stone-500 leading-tight">
-              Looking for services &amp; wedding planning tools
-            </p>
+            <User className="h-3.5 w-3.5" />
+            Customer
           </button>
-
           <button
             type="button"
             onClick={() => setRole("vendor")}
-            className={`flex flex-col items-start rounded-xl border p-3 text-left transition-colors cursor-pointer ${
+            className={`flex items-center justify-center gap-2 rounded-lg py-2 transition-colors cursor-pointer ${
               role === "vendor"
-                ? "border-[#844353] bg-[#FAF6F7] ring-1 ring-inset ring-[#844353]"
-                : "border-stone-200 bg-white hover:border-stone-300"
+                ? "bg-[#844353] text-white shadow-xs font-semibold"
+                : "text-stone-600 hover:text-stone-900"
             }`}
           >
-            <div className="flex w-full items-center justify-between">
-              <span className="text-xs font-semibold text-stone-900">
-                Vendor
-              </span>
-              <Store
-                className={`h-3.5 w-3.5 ${role === "vendor" ? "text-[#844353]" : "text-stone-400"}`}
-              />
-            </div>
-            <p className="mt-1 text-[10px] text-stone-500 leading-tight">
-              Offering wedding services, venue &amp; photography
-            </p>
+            <Store className="h-3.5 w-3.5" />
+            Vendor / Business
           </button>
         </div>
       </div>
@@ -203,7 +191,7 @@ export default function SignUpForm() {
       </div>
 
       {/* Sign Up Form */}
-      <form onSubmit={handleSubmit} className="space-y-3.5">
+      <form onSubmit={handleSubmit} autoComplete="off" className="space-y-3.5">
         <input type="hidden" name="role" value={role} />
 
         {/* Profile Image Upload */}

@@ -3,13 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Eye, EyeOff, User, Store, Shield, ArrowRight, ArrowLeft, AlertCircle } from "lucide-react";
+import { Mail, Eye, EyeOff, Shield, ArrowRight, ArrowLeft, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import GoogleButton from "@/components/auth/GoogleButton";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "../ui/toast";
+import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
-  const [role, setRole] = useState<"customer" | "vendor">("customer");
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +39,25 @@ export default function SignInForm() {
     const data = Object.fromEntries(formData.entries());
     console.log("Sign In Form Data:", data);
 
+    const formElement = e.currentTarget;
+
     try {
-      // Add your Better Auth sign-in functionality here
+      const { data, error } = await authClient.signIn.email({
+          email: email,
+          password: password,
+          rememberMe: true,
+      });
+      if (error) return setError(error.message ?? "Login failed!");
+
+      formElement.reset();
+
+      toast.add({
+        title: `Welcome back, ${data?.user?.name || "User"}!`,
+        description: "Signed in successfully.",
+        type: "success",
+      });
+      router.push("/");
+      router.refresh();
     } catch (err) {
       console.error(err);
     }
@@ -92,39 +112,11 @@ export default function SignInForm() {
         Sign in to manage your wedding plans or vendor services.
       </p>
 
-      {/* Role Toggle Selector */}
-      <div className="mt-5 grid grid-cols-2 gap-2 rounded-xl border border-stone-200 bg-[#FAF6F7] p-1 text-xs font-medium">
-        <button
-          type="button"
-          onClick={() => setRole("customer")}
-          className={`flex items-center justify-center gap-2 rounded-lg py-2 transition-colors cursor-pointer ${
-            role === "customer"
-              ? "bg-[#844353] text-white shadow-xs font-semibold"
-              : "text-stone-600 hover:text-stone-900"
-          }`}
-        >
-          <User className="h-3.5 w-3.5" />
-          Customer
-        </button>
-        <button
-          type="button"
-          onClick={() => setRole("vendor")}
-          className={`flex items-center justify-center gap-2 rounded-lg py-2 transition-colors cursor-pointer ${
-            role === "vendor"
-              ? "bg-[#844353] text-white shadow-xs font-semibold"
-              : "text-stone-600 hover:text-stone-900"
-          }`}
-        >
-          <Store className="h-3.5 w-3.5" />
-          Vendor / Business
-        </button>
-      </div>
-
       {/* Reusable Google Button */}
       <div className="mt-5">
         <GoogleButton
           label="Continue with Google"
-          onClick={() => console.log("Google Sign In clicked for role:", role)}
+          onClick={() => console.log("Google Sign In clicked")}
         />
       </div>
 
@@ -138,7 +130,6 @@ export default function SignInForm() {
 
       {/* Sign In Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5">
-        <input type="hidden" name="role" value={role} />
 
         {/* Email Address */}
         <div className="space-y-1.5 text-left">
