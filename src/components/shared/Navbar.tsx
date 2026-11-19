@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X, User, LogOut, LayoutDashboard, Settings } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
+import { signOut, useSession } from "@/lib/auth-client";
+import { toast } from "@/components/ui/toast";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -20,7 +21,7 @@ export default function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   // Authentication state
-  const { data: session } = authClient.useSession();
+  const { data: session } = useSession();
   const user = session?.user;
   const hasValidImage = Boolean(
     user?.image &&
@@ -30,10 +31,31 @@ export default function Navbar() {
   );
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : null;
 
+  // Show toast when returning from Google OAuth redirect
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auth") === "google_success" && user) {
+      toast.add({
+        title: "Signed In",
+        description: `Welcome to WedPlan, ${user.name || "User"}!`,
+        type: "success",
+      });
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth");
+      window.history.replaceState({}, "", url.pathname + (url.search ? url.search : ""));
+    }
+  }, [user]);
+
   const handleSignOut = async () => {
     setProfileOpen(false);
     setIsOpen(false);
-    await authClient.signOut();
+    await signOut();
+    toast.add({
+      title: "Signed Out",
+      description: "You have been logged out safely.",
+      type: "info",
+    });
   };
 
   const dropLinks = (

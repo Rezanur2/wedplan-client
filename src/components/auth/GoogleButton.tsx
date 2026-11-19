@@ -1,15 +1,48 @@
-import React from "react";
+'use client'
+
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+import { toast } from "@/components/ui/toast";
 
 interface GoogleButtonProps {
   label: string;
   onClick?: () => void;
+  role?: "customer" | "vendor";
 }
 
-export default function GoogleButton({ label, onClick }: GoogleButtonProps) {
+export default function GoogleButton({ label, onClick, role }: GoogleButtonProps) {
+
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    try {
+      setLoading(true);
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/?auth=google_success",
+        ...(role && {
+          additionalData: {
+            role: role,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Google sign in failed:", error);
+      toast.add({
+        title: "Google Sign In Failed",
+        description: "Could not connect to Google. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      disabled={loading}
+      onClick={onClick || handleGoogleSignIn}
       className="flex w-full items-center justify-center gap-2.5 rounded-xl border border-stone-200 bg-white py-2.5 text-xs font-medium text-stone-700 shadow-xs transition-colors hover:bg-stone-50 active:scale-[0.99] cursor-pointer"
     >
       <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24">

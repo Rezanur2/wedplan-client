@@ -47,13 +47,22 @@ export default function SignInForm() {
           password: password,
           rememberMe: true,
       });
-      if (error) return setError(error.message ?? "Login failed!");
+      if (error) {
+        const msg = error.message ?? "Invalid email or password.";
+        setError(msg);
+        toast.add({
+          title: "Sign In Failed",
+          description: msg,
+          type: "error",
+        });
+        return;
+      }
 
       formElement.reset();
 
       toast.add({
-        title: `Welcome back, ${data?.user?.name || "User"}!`,
-        description: "Signed in successfully.",
+        title: "Signed In",
+        description: `Welcome back, ${data?.user?.name || "User"}!`,
         type: "success",
       });
       router.push("/");
@@ -94,7 +103,7 @@ export default function SignInForm() {
       <div className="flex items-center justify-center lg:justify-between">
         <span className="inline-flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-[#FAF6F7] px-3.5 py-1 text-[11px] font-medium text-stone-600 shadow-2xs">
           <span className="h-1.5 w-1.5 rounded-full bg-[#844353]" />
-          Client &amp; Vendor Access
+          Customer &amp; Vendor Access
         </span>
         <Link
           href="/"
@@ -116,7 +125,6 @@ export default function SignInForm() {
       <div className="mt-5">
         <GoogleButton
           label="Continue with Google"
-          onClick={() => console.log("Google Sign In clicked")}
         />
       </div>
 

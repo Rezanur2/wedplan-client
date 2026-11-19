@@ -75,15 +75,24 @@ export default function SignUpForm() {
         image: image.startsWith("http") || image.startsWith("/") ? image : undefined,
         role: role,
       });
-      if (error) return setError(error.message ?? "Could not create your account.");
+      if (error) {
+        const msg = error.message ?? "Could not create your account.";
+        setError(msg);
+        toast.add({
+          title: "Registration Failed",
+          description: msg,
+          type: "error",
+        });
+        return;
+      }
       
       formElement.reset();
       setPassword("");
       setFileName(null);
 
       toast.add({
-        title: `Hello ${data.user?.name},`,
-        description: "Your account has been created successfully.",
+        title: "Account Created",
+        description: `Welcome to WedPlan, ${data.user?.name || "Member"}!`,
         type: "success",
       });
       router.push("/signin");
@@ -169,7 +178,7 @@ export default function SignUpForm() {
             }`}
           >
             <Store className="h-3.5 w-3.5" />
-            Vendor / Business
+            Vendor
           </button>
         </div>
       </div>
@@ -178,7 +187,7 @@ export default function SignUpForm() {
       <div className="mt-5">
         <GoogleButton
           label="Sign up with Google"
-          onClick={() => console.log("Google Sign Up clicked for role:", role)}
+          role={role}
         />
       </div>
 
