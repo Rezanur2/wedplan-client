@@ -25,6 +25,20 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   reactCompiler: true,
+  async redirects() {
+    return [
+      {
+        source: "/sign-in",
+        destination: "/signin",
+        permanent: true,
+      },
+      {
+        source: "/sign-up",
+        destination: "/signup",
+        permanent: true,
+      },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

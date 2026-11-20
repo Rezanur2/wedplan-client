@@ -3,22 +3,27 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Menu, X, User, LogOut, LayoutDashboard, Settings } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, User, LogOut, LayoutDashboard, Settings, ChevronDown } from "lucide-react";
 import { signOut, useSession } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
   { name: "Home", href: "/" },
   { name: "Browse Services", href: "/services" },
   { name: "Categories", href: "/#categories" },
-  { name: "Become a Vendor", href: "/signup?role=vendor" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const router = useRouter()
 
   // Authentication state
   const { data: session } = useSession();
@@ -30,6 +35,27 @@ export default function Navbar() {
         user.image.startsWith("/"))
   );
   const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : null;
+
+  const renderUserAvatar = (size: number, textClass = "text-xs") => (
+    <div
+      style={{ width: size, height: size }}
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#844353] ${textClass} font-bold text-white shadow-2xs`}
+    >
+      {hasValidImage ? (
+        <Image
+          src={user!.image!}
+          alt={user?.name || "User Avatar"}
+          width={size}
+          height={size}
+          className="h-full w-full object-cover"
+        />
+      ) : userInitial ? (
+        <span className="font-semibold uppercase select-none">{userInitial}</span>
+      ) : (
+        <User className="h-3.5 w-3.5 text-white" />
+      )}
+    </div>
+  );
 
   // Show toast when returning from Google OAuth redirect
   useEffect(() => {
@@ -48,7 +74,6 @@ export default function Navbar() {
   }, [user]);
 
   const handleSignOut = async () => {
-    setProfileOpen(false);
     setIsOpen(false);
     await signOut();
     toast.add({
@@ -56,55 +81,51 @@ export default function Navbar() {
       description: "You have been logged out safely.",
       type: "info",
     });
+    router.push("/signin");
+    router.refresh();
   };
 
-  const dashboardHref =
-    user?.role === "admin"
-      ? "/admin"
-      : user?.role === "vendor"
-      ? "/vendor"
-      : "/customer";
+  const dashboardHref = `/dashboard/${user?.role || "customer"}`;
+  const profileHref = `${dashboardHref}/profile`;
 
-  const profileHref =
-    user?.role === "admin"
-      ? "/admin/profile"
-      : user?.role === "vendor"
-      ? "/vendor/profile"
-      : "/customer/profile";
+  const profileMenuContent = (
+    <DropdownMenuContent align="end" className="w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg">
+      <div className="flex items-center gap-2.5 border-b border-stone-100 px-2.5 py-2">
+        {renderUserAvatar(32)}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-xs font-semibold text-stone-800">
+            {user?.name}
+          </p>
+          <p className="truncate text-[11px] text-stone-500">
+            {user?.email}
+          </p>
+        </div>
+      </div>
 
-  const dropLinks = (
-    <>
-      <Link
-        href={dashboardHref}
-        onClick={() => {
-          setProfileOpen(false);
-          setIsOpen(false);
-        }}
-        className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-stone-700 hover:bg-stone-100"
-      >
-        <LayoutDashboard className="h-3.5 w-3.5" />
-        Dashboard
-      </Link>
-      <Link
-        href={profileHref}
-        onClick={() => {
-          setProfileOpen(false);
-          setIsOpen(false);
-        }}
-        className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-stone-700 hover:bg-stone-100"
-      >
-        <Settings className="h-3.5 w-3.5" />
-        Profile Settings
-      </Link>
-      <button
-        type="button"
-        onClick={handleSignOut}
-        className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-red-600 hover:bg-red-50"
-      >
-        <LogOut className="h-3.5 w-3.5" />
-        Logout
-      </button>
-    </>
+      <div className="pt-1">
+        <DropdownMenuItem
+          render={<Link href={dashboardHref} />}
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-stone-700 hover:bg-stone-100 cursor-pointer"
+        >
+          <LayoutDashboard className="h-3.5 w-3.5" />
+          Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          render={<Link href={profileHref} />}
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-stone-700 hover:bg-stone-100 cursor-pointer"
+        >
+          <Settings className="h-3.5 w-3.5" />
+          Profile Settings
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={handleSignOut}
+          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-red-600 hover:bg-red-50 cursor-pointer"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          Logout
+        </DropdownMenuItem>
+      </div>
+    </DropdownMenuContent>
   );
 
   return (
@@ -154,65 +175,13 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             /* User Avatar and Dropdown */
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white shadow-xs hover:bg-stone-800 transition-colors"
-                aria-label="User profile"
-              >
-                {hasValidImage ? (
-                  <Image
-                    src={user.image!}
-                    alt={user.name || "User Avatar"}
-                    width={36}
-                    height={36}
-                    className="h-full w-full object-cover"
-                  />
-                ) : userInitial ? (
-                  <span className="font-semibold text-xs text-white uppercase select-none">
-                    {userInitial}
-                  </span>
-                ) : (
-                  <User className="h-4 w-4 text-white" />
-                )}
-              </button>
-
-              {profileOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg z-50">
-                  <div className="flex items-center gap-2.5 border-b border-stone-100 px-2.5 py-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white">
-                      {hasValidImage ? (
-                        <Image
-                          src={user.image!}
-                          alt={user.name || "User Avatar"}
-                          width={32}
-                          height={32}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : userInitial ? (
-                        <span className="font-semibold text-xs text-white uppercase select-none">
-                          {userInitial}
-                        </span>
-                      ) : (
-                        <User className="h-4 w-4 text-white" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-stone-800">
-                        {user.name}
-                      </p>
-                      <p className="truncate text-[11px] text-stone-500">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="pt-1">
-                    {dropLinks}
-                  </div>
-                </div>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-stone-200/90 bg-white p-1 pr-2.5 shadow-2xs hover:bg-[#FAF5F7] transition-colors cursor-pointer outline-none">
+                {renderUserAvatar(28)}
+                <ChevronDown className="h-3.5 w-3.5 text-stone-500" />
+              </DropdownMenuTrigger>
+              {profileMenuContent}
+            </DropdownMenu>
           ) : (
             /* Sign In and Sign Up */
             <>
@@ -235,65 +204,13 @@ export default function Navbar() {
         {/* Mobile Header Controls */}
         <div className="flex items-center gap-2 md:hidden">
           {user && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setProfileOpen(!profileOpen)}
-                className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white shadow-xs"
-                aria-label="User profile"
-              >
-                {hasValidImage ? (
-                  <Image
-                    src={user.image!}
-                    alt={user.name || "User Avatar"}
-                    width={32}
-                    height={32}
-                    className="h-full w-full object-cover"
-                  />
-                ) : userInitial ? (
-                  <span className="font-semibold text-[11px] text-white uppercase select-none">
-                    {userInitial}
-                  </span>
-                ) : (
-                  <User className="h-3.5 w-3.5 text-white" />
-                )}
-              </button>
-
-              {profileOpen && (
-                <div className="absolute right-0 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg z-50">
-                  <div className="flex items-center gap-2.5 border-b border-stone-100 px-2.5 py-2">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-stone-900 text-white">
-                      {hasValidImage ? (
-                        <Image
-                          src={user.image!}
-                          alt={user.name || "User Avatar"}
-                          width={32}
-                          height={32}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : userInitial ? (
-                        <span className="font-semibold text-xs text-white uppercase select-none">
-                          {userInitial}
-                        </span>
-                      ) : (
-                        <User className="h-3.5 w-3.5 text-white" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-stone-800">
-                        {user.name}
-                      </p>
-                      <p className="truncate text-[11px] text-stone-500">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="pt-1">
-                    {dropLinks}
-                  </div>
-                </div>
-              )}
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-white p-1 pr-2 shadow-2xs hover:bg-[#FAF5F7] transition-colors cursor-pointer outline-none">
+                {renderUserAvatar(24, "text-[11px]")}
+                <ChevronDown className="h-3 w-3 text-stone-500" />
+              </DropdownMenuTrigger>
+              {profileMenuContent}
+            </DropdownMenu>
           )}
 
           <button

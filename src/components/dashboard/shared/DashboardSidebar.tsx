@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
@@ -30,40 +31,29 @@ import {
   Layers,
   Receipt,
   LogOut,
-  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
+import { IMenuItem, TUserRole } from "@/types";
 
-export interface MenuItem {
-  id: string;
-  name: string;
-  url: string;
-  icon: LucideIcon;
-  badge?: string;
-  badgeVariant?: "pink" | "gray";
-}
-
-export type UserRole = "customer" | "vendor" | "admin";
-
-const menuItemsByRole: Record<UserRole, MenuItem[]> = {
+const menuItemsByRole: Record<TUserRole, IMenuItem[]> = {
   customer: [
     {
       id: "customer-overview",
       name: "Overview",
-      url: "/customer",
+      url: "/dashboard/customer",
       icon: LayoutDashboard,
     },
     {
       id: "customer-bookings",
       name: "My Bookings",
-      url: "/customer/my-bookings",
+      url: "/dashboard/customer/my-bookings",
       icon: CalendarCheck,
     },
     {
       id: "customer-profile",
       name: "Profile Settings",
-      url: "/customer/profile",
+      url: "/dashboard/customer/profile",
       icon: SlidersHorizontal,
     },
   ],
@@ -71,25 +61,25 @@ const menuItemsByRole: Record<UserRole, MenuItem[]> = {
     {
       id: "vendor-overview",
       name: "Overview",
-      url: "/vendor",
+      url: "/dashboard/vendor",
       icon: LayoutDashboard,
     },
     {
       id: "vendor-my-services",
       name: "My Services",
-      url: "/vendor/my-services",
+      url: "/dashboard/vendor/my-services",
       icon: Package,
     },
     {
       id: "vendor-add-service",
       name: "Add Service",
-      url: "/vendor/add-service",
+      url: "/dashboard/vendor/add-service",
       icon: PlusCircle,
     },
     {
       id: "vendor-bookings",
       name: "Booking Requests",
-      url: "/vendor/booking-requests",
+      url: "/dashboard/vendor/booking-requests",
       icon: CalendarDays,
       badge: "3 pending",
       badgeVariant: "pink",
@@ -97,7 +87,7 @@ const menuItemsByRole: Record<UserRole, MenuItem[]> = {
     {
       id: "vendor-subscription",
       name: "Subscription",
-      url: "/vendor/subscription",
+      url: "/dashboard/vendor/subscription",
       icon: Tag,
       badge: "Free Tier",
       badgeVariant: "gray",
@@ -105,7 +95,7 @@ const menuItemsByRole: Record<UserRole, MenuItem[]> = {
     {
       id: "vendor-profile",
       name: "Profile Settings",
-      url: "/vendor/profile",
+      url: "/dashboard/vendor/profile",
       icon: SlidersHorizontal,
     },
   ],
@@ -113,25 +103,25 @@ const menuItemsByRole: Record<UserRole, MenuItem[]> = {
     {
       id: "admin-overview",
       name: "Overview",
-      url: "/admin",
+      url: "/dashboard/admin",
       icon: LayoutDashboard,
     },
     {
       id: "admin-users",
       name: "Manage Users",
-      url: "/admin/manage-users",
+      url: "/dashboard/admin/manage-users",
       icon: Users,
     },
     {
       id: "admin-services",
       name: "Manage Services",
-      url: "/admin/manage-services",
+      url: "/dashboard/admin/manage-services",
       icon: Layers,
     },
     {
       id: "admin-transactions",
       name: "Transactions",
-      url: "/admin/transactions",
+      url: "/dashboard/admin/transactions",
       icon: Receipt,
     },
   ],
@@ -143,24 +133,60 @@ export function DashboardSidebar() {
   const { data: session } = useSession();
   const user = session?.user;
 
-  // Detect role from current route or session
-  const role: UserRole = pathname.startsWith("/customer")
-    ? "customer"
-    : pathname.startsWith("/admin")
-    ? "admin"
-    : ((user?.role as UserRole) || "vendor");
+  // 1. Role: Read from authenticated session (with route fallback)
+  const role: TUserRole = (user?.role as TUserRole) || (
+    pathname.startsWith("/dashboard/vendor") ? "vendor" :
+    pathname.startsWith("/dashboard/admin") ? "admin" : "customer"
+  );
 
-  const currentMenu = menuItemsByRole[role] || menuItemsByRole.vendor;
+  // 2. Menu Items based on role
+  const sidebarItems = menuItemsByRole[role] || menuItemsByRole.customer;
 
-  const portalTitle =
-    role === "vendor"
-      ? "Vendor Portal"
-      : role === "admin"
-      ? "Admin Portal"
-      : "Customer Portal";
+  // 3. Active Path Check
+  const isActivePath = (href: string) => {
+    const isRootOverview = href === `/dashboard/${role}`;
 
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : role === "customer" ? "C" : "V";
-  const displayName = user?.name || (role === "customer" ? "Customer" : "Vendor Studio");
+    return isRootOverview
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  // User fields from Better Auth session
+  const businessName = (user as { businessName?: string } | undefined)?.businessName;
+  const subscriptionPlan = (user as { subscriptionPlan?: string } | undefined)?.subscriptionPlan || "free";
+  const isPremium = subscriptionPlan.toLowerCase() === "premium";
+
+  const workspaceConfig = {
+    vendor: {
+      label: "Workspace",
+      title: businessName || user?.name || "Vendor Studio",
+      badge: isPremium ? "Premium" : "Free Plan",
+      badgeClass: isPremium
+        ? "border-amber-300 bg-amber-50 text-amber-800"
+        : "border-rose-200/80 bg-[#FCECEE] text-[#844353]",
+      subtitle: businessName && user?.name ? user.name : "Verified Vendor",
+    },
+    customer: {
+      label: "Workspace",
+      title: user?.name ? `${user.name}'s Wedding` : "My Wedding Plan",
+      badge: "Couple",
+      badgeClass: "border-stone-200 bg-stone-100 text-stone-700",
+      subtitle: user?.email || "Active Planning",
+    },
+    admin: {
+      label: "Control Center",
+      title: "Admin Console",
+      badge: "Administrator",
+      badgeClass: "border-purple-200 bg-purple-50 text-purple-700",
+      subtitle: user?.email || "System Management",
+    },
+  }[role];
+
+  const userInitial = user?.name?.charAt(0).toUpperCase() || "U";
+  const hasValidImage = Boolean(user?.image && typeof user.image === "string" && user.image.trim() !== "");
+  const displayName =
+    user?.name ||
+    (role === "admin" ? "Admin" : role === "vendor" ? "Vendor Studio" : "Customer");
 
   const handleSignOut = async () => {
     try {
@@ -188,36 +214,46 @@ export function DashboardSidebar() {
         <div className="group-data-[collapsible=icon]:hidden">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold tracking-wider text-stone-400 uppercase">
-              Workspace
+              {workspaceConfig.label}
             </span>
             <SidebarTrigger className="h-6 w-6 rounded-md text-stone-500 hover:bg-[#F3E8EC] hover:text-stone-900 border-none shadow-none cursor-pointer" />
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <h3 className="font-serif text-sm font-bold text-stone-900 truncate">
-              {portalTitle}
+            <h3 className="font-serif text-sm font-bold text-stone-900 truncate max-w-37.5">
+              {workspaceConfig.title}
             </h3>
-            {role === "vendor" && (
-              <span className="rounded-full border border-rose-200/80 bg-[#FCECEE] px-2 py-0.5 text-[10px] font-semibold text-[#844353]">
-                Free
-              </span>
-            )}
+            <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold", workspaceConfig.badgeClass)}>
+              {workspaceConfig.badge}
+            </span>
           </div>
-          {role === "vendor" && (
-            <p className="text-[10px] text-stone-400 font-medium mt-0.5">VIP</p>
-          )}
+          <p className="text-[10px] text-stone-400 font-medium mt-0.5 truncate">
+            {workspaceConfig.subtitle}
+          </p>
         </div>
 
-        {/* Collapsed View (Just the toggle trigger centered) */}
-        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center py-0.5">
-          <SidebarTrigger className="h-7 w-7 rounded-lg text-stone-600 hover:bg-[#F3E8EC] hover:text-stone-900 border-none shadow-none cursor-pointer" />
+        {/* Collapsed Mini Workspace Avatar */}
+        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center py-1">
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#844353] text-xs font-bold text-white shadow-2xs cursor-pointer">
+                  {workspaceConfig.title.charAt(0).toUpperCase()}
+                </div>
+              }
+            />
+            <TooltipContent side="right">
+              <p className="font-semibold">{workspaceConfig.title}</p>
+              <p className="text-[10px] text-stone-400">{workspaceConfig.badge}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </SidebarHeader>
 
       {/* Navigation Menu (Content) */}
       <SidebarContent className="p-2.5 bg-[#FAF5F7]">
         <SidebarMenu className="gap-1.5">
-          {currentMenu.map((item) => {
-            const isActive = pathname === item.url;
+          {sidebarItems.map((item) => {
+            const isActive = isActivePath(item.url);
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
@@ -278,17 +314,19 @@ export function DashboardSidebar() {
                 <span className="text-[10px] font-bold tracking-wider text-stone-400 uppercase">
                   Current Plan
                 </span>
-                <Link
-                  href="/vendor/subscription"
-                  className="text-[10px] font-bold text-[#844353] hover:underline"
-                >
-                  Upgrade
-                </Link>
+                {!isPremium && (
+                  <Link
+                    href="/dashboard/vendor/subscription"
+                    className="text-[10px] font-bold text-[#844353] hover:underline"
+                  >
+                    Upgrade
+                  </Link>
+                )}
               </div>
               <p className="mt-1 text-xs font-semibold text-stone-800">
-                Free Plan{" "}
+                {isPremium ? "Premium Membership" : "Free Tier"}{" "}
                 <span className="text-[11px] text-stone-400 font-normal">
-                  (2/3 Active)
+                  {isPremium ? "(Unlimited)" : "(Up to 3 services)"}
                 </span>
               </p>
             </div>
@@ -297,8 +335,18 @@ export function DashboardSidebar() {
           {/* User Profile Bar */}
           <div className="flex items-center justify-between rounded-xl border border-[#EFE5E9] bg-white p-2 shadow-2xs">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#844353] text-xs font-bold text-white shadow-2xs">
-                {userInitial}
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#844353] text-xs font-bold text-white shadow-2xs">
+                {hasValidImage ? (
+                  <Image
+                    src={user!.image!}
+                    alt={displayName}
+                    width={32}
+                    height={32}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  userInitial
+                )}
               </div>
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-stone-800">
@@ -313,7 +361,7 @@ export function DashboardSidebar() {
             <button
               type="button"
               onClick={handleSignOut}
-              title="Sign out"
+              title="Logout"
               className="rounded-lg p-1.5 text-stone-400 hover:bg-rose-50 hover:text-[#844353] transition-colors cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
@@ -326,8 +374,18 @@ export function DashboardSidebar() {
           <Tooltip>
             <TooltipTrigger
               render={
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#844353] text-xs font-bold text-white shadow-2xs cursor-pointer">
-                  {userInitial}
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-[#844353] text-xs font-bold text-white shadow-2xs cursor-pointer">
+                  {hasValidImage ? (
+                    <Image
+                      src={user!.image!}
+                      alt={displayName}
+                      width={32}
+                      height={32}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    userInitial
+                  )}
                 </div>
               }
             />
@@ -350,7 +408,7 @@ export function DashboardSidebar() {
               }
             />
             <TooltipContent side="right">
-              Sign out
+              Logout
             </TooltipContent>
           </Tooltip>
         </div>
