@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useSession, signOut } from "@/lib/auth-client";
+import { signOut } from "@/lib/auth-client";
 import {
   Sidebar,
   SidebarContent,
@@ -13,6 +13,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import {
   Tooltip,
@@ -34,7 +35,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/toast";
-import { IMenuItem, TUserRole } from "@/types";
+import { DashboardSidebarProps, IMenuItem, TUserRole } from "@/types";
 
 const menuItemsByRole: Record<TUserRole, IMenuItem[]> = {
   customer: [
@@ -127,11 +128,12 @@ const menuItemsByRole: Record<TUserRole, IMenuItem[]> = {
   ],
 };
 
-export function DashboardSidebar() {
+
+
+export function DashboardSidebar({ user }: DashboardSidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { setOpenMobile } = useSidebar();
 
   // 1. Role: Read from authenticated session (with route fallback)
   const role: TUserRole = (user?.role as TUserRole) || (
@@ -151,9 +153,9 @@ export function DashboardSidebar() {
       : pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  // User fields from Better Auth session
-  const businessName = (user as { businessName?: string } | undefined)?.businessName;
-  const subscriptionPlan = (user as { subscriptionPlan?: string } | undefined)?.subscriptionPlan || "free";
+  // User fields from authenticated user prop
+  const businessName = user?.businessName;
+  const subscriptionPlan = user?.subscriptionPlan || "free";
   const isPremium = subscriptionPlan.toLowerCase() === "premium";
 
   const workspaceConfig = {
@@ -259,6 +261,7 @@ export function DashboardSidebar() {
                 <SidebarMenuButton
                   isActive={isActive}
                   tooltip={item.name}
+                  onClick={() => setOpenMobile(false)}
                   render={<Link href={item.url} />}
                   className={cn(
                     "flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium transition-all cursor-pointer",
@@ -317,6 +320,7 @@ export function DashboardSidebar() {
                 {!isPremium && (
                   <Link
                     href="/dashboard/vendor/subscription"
+                    onClick={() => setOpenMobile(false)}
                     className="text-[10px] font-bold text-[#844353] hover:underline"
                   >
                     Upgrade

@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { Camera, X } from "lucide-react";
+import { Camera, X, Loader2 } from "lucide-react";
+import { uploadImageToImgBB } from "@/lib/uploadImage";
 
 interface ProfileImageUploadProps {
   name: string;
@@ -16,40 +17,43 @@ export default function ProfileImageUpload({
   onFileChange,
 }: ProfileImageUploadProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Derive initials from name (e.g. "vendor" -> "VE", "Eleanor Vance" -> "EV")
-  const getInitials = (text: string): string => {
-    const trimmed = text.trim();
-    if (!trimmed) return "WP";
-    const parts = trimmed.split(/\s+/);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return trimmed.slice(0, 2).toUpperCase();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const uploadedUrl = await uploadImageToImgBB(file);
+      setImageUrl(uploadedUrl);
+      setPreviewUrl(uploadedUrl);
       onFileChange(file.name);
+    } catch (err) {
+      console.error("Profile image upload failed:", err);
+    } finally {
+      setIsUploading(false);
+      e.target.value = "";
     }
   };
 
   const handleRemove = () => {
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    setImageUrl("");
     setPreviewUrl(null);
     onFileChange(null);
   };
 
   return (
     <div className="flex items-center gap-3.5 rounded-2xl border border-stone-200/90 bg-stone-50/50 p-2.5 sm:p-3 text-left">
+      {/* Hidden input sends the uploaded ImgBB URL in the SignUp form submission */}
+      <input type="hidden" name="image" value={imageUrl} />
+
       {/* Avatar Circle: Initials or Preview Image */}
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-stone-200 bg-[#F4E8EC] flex items-center justify-center shadow-2xs">
-        {previewUrl ? (
+        {isUploading ? (
+          <Loader2 className="h-5 w-5 animate-spin text-[#844353]" />
+        ) : previewUrl ? (
           <Image
             src={previewUrl}
             alt="Preview"
@@ -58,11 +62,11 @@ export default function ProfileImageUpload({
           />
         ) : (
           <span className="font-serif text-sm font-semibold tracking-wider text-[#844353]">
-            {getInitials(name)}
+            {name ? name.charAt(0).toUpperCase() : "U"}
           </span>
         )}
 
-        {previewUrl && (
+        {previewUrl && !isUploading && (
           <button
             type="button"
             onClick={handleRemove}
@@ -81,18 +85,28 @@ export default function ProfileImageUpload({
           className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-3 py-1 text-[11px] font-medium text-stone-700 shadow-2xs hover:border-[#844353]/30 hover:bg-stone-50 transition-all cursor-pointer"
         >
           <Camera className="h-3 w-3 text-[#844353]" />
-          <span>{fileName ? "Change Profile Photo" : "Upload Profile Photo (Optional)"}</span>
+          <span>
+            {isUploading
+              ? "Uploading to ImgBB..."
+              : fileName
+              ? "Change Profile Photo"
+              : "Upload Profile Photo (Optional)"}
+          </span>
         </label>
         <p className="text-[10px] text-stone-400 truncate">
-          {fileName ? fileName : "Hosted on ImgBB (PNG, JPG, WebP, max 5MB)."}
+          {isUploading
+            ? "Uploading your image to ImgBB..."
+            : fileName
+            ? fileName
+            : "Hosted on ImgBB (PNG, JPG, WebP, max 5MB)."}
         </p>
       </div>
 
       <input
         id="signup-image"
-        name="image"
         type="file"
         accept="image/*"
+        disabled={isUploading}
         className="hidden"
         onChange={handleFileChange}
       />

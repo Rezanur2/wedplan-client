@@ -27,7 +27,22 @@ export const auth = betterAuth({
                 type: 'string',
                 input: true,
                 required: false,
-            }
+            },
+            isBlocked: {
+                type: 'boolean',
+                defaultValue: false,
+                input: false,
+            },
+            subscriptionPlan: {
+                type: 'string',
+                defaultValue: 'free',
+                input: false,
+            },
+            subscriptionExpiresAt: {
+                type: 'date',
+                required: false,
+                input: false,
+            },
         }
     },
     database: mongodbAdapter(db, {
