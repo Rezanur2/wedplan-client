@@ -26,14 +26,7 @@ export default async function DashboardLayout({
   // The shadcn sidebar stores its open/collapsed state in this cookie.
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
-  const user: IDashboardUser = {
-    name: session.user.name,
-    email: session.user.email,
-    image: session.user.image,
-    role: session.user.role,
-    businessName: (session.user as { businessName?: string })?.businessName,
-    subscriptionPlan: (session.user as { subscriptionPlan?: string })?.subscriptionPlan,
-  };
+  const user = session.user as IDashboardUser;
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FCFBF9]">

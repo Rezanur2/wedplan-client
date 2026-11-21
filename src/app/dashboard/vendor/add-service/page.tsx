@@ -2,6 +2,7 @@ import React from "react";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import AddServiceForm from "@/components/dashboard/vendor/AddServiceForm";
+import { IDashboardUser } from "@/types";
 
 export const metadata = {
   title: "Add New Service | WedPlan Vendor Studio",
@@ -10,19 +11,15 @@ export const metadata = {
 
 export default async function AddServicePage() {
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: await headers()
   });
-
-  const vendorId = session?.user?.id;
-  const subscriptionPlan =
-    (session?.user as { subscriptionPlan?: string })?.subscriptionPlan || "free";
+  const user = session?.user as IDashboardUser;
 
   return (
     <div className="w-full">
       <AddServiceForm
-        vendorId={vendorId}
-        subscriptionPlan={subscriptionPlan}
-        activeServiceCount={2} // Default demo count, can be loaded dynamically from services collection
+        vendorId={user?.id}
+        subscriptionPlan={user?.subscriptionPlan || "free"}
       />
     </div>
   );

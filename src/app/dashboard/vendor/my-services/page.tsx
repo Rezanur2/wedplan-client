@@ -1,11 +1,17 @@
-import React from 'react';
+import React from "react";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import MyServicesList from "@/components/dashboard/vendor/MyServicesList";
+import { getServices } from "@/lib/api/services";
 
-const MyServicesPage = () => {
-    return (
-        <div>
-            <h2>My services page</h2>
-        </div>
-    );
+export const metadata = {
+  title: "My Services | Vendor Dashboard | WedPlan",
+  description: "Manage your wedding services, availability, and listings on WedPlan.",
 };
 
-export default MyServicesPage;
+export default async function MyServicesPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const services = await getServices(session?.user?.id);
+
+  return <MyServicesList services={services} />;
+}

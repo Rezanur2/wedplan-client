@@ -54,7 +54,7 @@ interface AddServiceFormProps {
 }
 
 export default function AddServiceForm({
-  vendorId = "vendor_id",
+  vendorId = "",
   subscriptionPlan = "free",
   activeServiceCount = 2,
 }: AddServiceFormProps) {
@@ -104,6 +104,11 @@ export default function AddServiceForm({
       setImage(imageURL);
     } catch (err) {
       console.error("Image upload failed:", err);
+      toast.add({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsUploading(false);
       e.target.value = "";
@@ -165,7 +170,7 @@ export default function AddServiceForm({
       ...form,
       price: Number(form.price),
       images: [image],
-      vendorId,
+      vendorId: vendorId || "",
       status: "Pending",
       createdAt: new Date().toISOString(),
     };

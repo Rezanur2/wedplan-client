@@ -12,3 +12,10 @@ export const createService = async (data: ServiceFormData) => {
     })
     return res.json();
 }
+
+export const deleteService = async (serviceId: string) => {
+    const res = await fetch(`${BASE_URL}/services/${serviceId}`, {
+        method: "DELETE"
+    })
+    return res.json();
+}

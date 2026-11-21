@@ -12,6 +12,7 @@ export interface IMenuItem {
 }
 
 export interface IDashboardUser {
+  id?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
@@ -37,5 +38,16 @@ export interface ServiceFormData {
   vendorId?: string;
   status?: string;
   createdAt?: string;
+}
+
+export interface IVendorService extends ServiceFormData {
+  _id?: string;
+  id?: string;
+  isAvailable?: boolean;
+  views?: number;
+  inquiries?: number;
+  bookings?: number;
+  features?: string[];
+  reviewNotice?: string;
 }
 
