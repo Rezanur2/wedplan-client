@@ -13,6 +13,7 @@ import {
   MapPin,
   ArrowRight,
   CheckCircle2,
+  Plus,
 } from "lucide-react";
 import VendorPlanBanner from "./VendorPlanBanner";
 import { Input } from "@/components/ui/input";
@@ -70,8 +71,8 @@ export default function AddServiceForm({
     description: "",
   });
 
-  // Single image state
-  const [image, setImage] = useState<string>("");
+  // Multiple images state 
+  const [images, setImages] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -89,10 +90,19 @@ export default function AddServiceForm({
     }
   };
 
-  // Upload single image
+  // Upload image 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (images.length >= 4) {
+      toast.add({
+        title: "Limit Reached",
+        description: "You can upload a maximum of 4 photos.",
+        type: "error",
+      });
+      return;
+    }
 
     if (errors.image) {
       setErrors((prev) => ({ ...prev, image: "" }));
@@ -101,7 +111,7 @@ export default function AddServiceForm({
     setIsUploading(true);
     try {
       const imageURL = await uploadImageToImgBB(file);
-      setImage(imageURL);
+      setImages((prev) => [...prev, imageURL]);
     } catch (err) {
       console.error("Image upload failed:", err);
       toast.add({
@@ -113,6 +123,11 @@ export default function AddServiceForm({
       setIsUploading(false);
       e.target.value = "";
     }
+  };
+
+  // Remove image from gallery
+  const handleRemoveImage = (indexToRemove: number) => {
+    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
   // Required field validation
@@ -134,8 +149,8 @@ export default function AddServiceForm({
     if (!form.description.trim()) {
       newErrors.description = "Service description is required.";
     }
-    if (!image) {
-      newErrors.image = "Please upload a service image.";
+    if (images.length === 0) {
+      newErrors.image = "Please upload at least one service image.";
     }
 
     setErrors(newErrors);
@@ -169,7 +184,7 @@ export default function AddServiceForm({
     const serviceData: ServiceFormData = {
       ...form,
       price: Number(form.price),
-      images: [image],
+      images: images,
       vendorId: vendorId || "",
       status: "Pending",
       createdAt: new Date().toISOString(),
@@ -476,70 +491,128 @@ export default function AddServiceForm({
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-stone-900">
-                  Service Image <span className="text-rose-600">*</span>
+                  Service Photos <span className="text-rose-600">*</span>
                 </h2>
                 <p className="text-[11px] text-stone-500">
-                  Upload a photo of this service
+                  Upload up to 4 photos for this service
                 </p>
               </div>
             </div>
+            <span className="text-xs font-semibold text-stone-500">
+              {images.length}/4 Photos
+            </span>
           </div>
 
-          <div className="flex justify-center">
-            {image ? (
-              /* Preview when image is uploaded */
-              <div className="relative h-44 w-full sm:w-72 overflow-hidden rounded-xl border border-stone-200 bg-stone-100">
-                <Image
-                  src={image}
-                  alt="Service Image Preview"
-                  fill
-                  className="object-cover"
+          <div>
+            {/* Primary Image Upload Field */}
+            <div className="w-full">
+              <label
+                htmlFor="photo-upload-main"
+                className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center cursor-pointer min-h-36 transition-colors ${
+                  errors.image
+                    ? "border-rose-400 bg-rose-50/30"
+                    : "border-stone-200 bg-stone-50/40 hover:bg-stone-50"
+                } ${isUploading || images.length >= 4 ? "opacity-60 cursor-not-allowed" : ""}`}
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-[#844353]">
+                  <UploadCloud className="h-5 w-5" />
+                </div>
+                <p className="mt-2 text-xs font-semibold text-stone-800">
+                  {isUploading
+                    ? "Uploading photo..."
+                    : images.length >= 4
+                    ? "Maximum 4 photos uploaded"
+                    : "Click or drag to upload photo"}
+                </p>
+                <p className="text-[10px] text-stone-400 mt-0.5">
+                  JPG, PNG or WEBP up to 5MB (Upload up to 4 photos)
+                </p>
+                <input
+                  id="photo-upload-main"
+                  type="file"
+                  accept="image/*"
+                  disabled={isUploading || images.length >= 4}
+                  onChange={handleImageUpload}
+                  className="hidden"
                 />
-                <button
-                  type="button"
-                  onClick={() => setImage("")}
-                  className="absolute right-2.5 top-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors cursor-pointer"
-                  title="Remove photo"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+              </label>
+              {errors.image && (
+                <p className="mt-1.5 text-xs text-rose-600 font-medium">
+                  {errors.image}
+                </p>
+              )}
+            </div>
+
+            {/* 4 Thumbnails Grid (Small size on mobile, responsive grid) */}
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-stone-700">
+                  Gallery Photos ({images.length}/4)
+                </span>
+                <span className="text-[10px] text-stone-400">
+                  1st photo is cover • Click slot to add
+                </span>
               </div>
-            ) : (
-              /* Image Upload Box */
-              <div className="w-full">
-                <label
-                  htmlFor="photo-upload"
-                  className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center cursor-pointer min-h-36 transition-colors ${
-                    errors.image
-                      ? "border-rose-400 bg-rose-50/30"
-                      : "border-stone-200 bg-stone-50/40 hover:bg-stone-50"
-                  }`}
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-[#844353]">
-                    <UploadCloud className="h-5 w-5" />
-                  </div>
-                  <p className="mt-2 text-xs font-semibold text-stone-800">
-                    {isUploading ? "Uploading..." : "Click or drag to upload photo"}
-                  </p>
-                  <p className="text-[10px] text-stone-400 mt-0.5">
-                    JPG, PNG or WEBP up to 5MB
-                  </p>
-                  <input
-                    id="photo-upload"
-                    type="file"
-                    accept="image/*"
-                    disabled={isUploading}
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </label>
-                {errors.image && (
-                  <p className="mt-1.5 text-xs text-rose-600 font-medium">
-                    {errors.image}
-                  </p>
-                )}
+
+              <div className="grid grid-cols-4 gap-2 sm:gap-3">
+                {Array.from({ length: 4 }).map((_, index) => {
+                  const imgUrl = images[index];
+
+                  if (imgUrl) {
+                    return (
+                      <div
+                        key={index}
+                        className="group relative aspect-square sm:aspect-4/3 w-full overflow-hidden rounded-lg sm:rounded-xl border border-stone-200 bg-stone-100 shadow-2xs"
+                      >
+                        <Image
+                          src={imgUrl}
+                          alt={`Service Photo ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        {index === 0 && (
+                          <span className="absolute left-1 top-1 rounded bg-[#844353] px-1 sm:px-1.5 py-0.5 text-[7.5px] sm:text-[9px] font-semibold text-white shadow-xs">
+                            Cover
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute right-1 top-1 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full bg-black/60 text-white hover:bg-rose-600 transition-colors cursor-pointer"
+                          title="Remove photo"
+                        >
+                          <X className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <label
+                      key={index}
+                      htmlFor={`photo-upload-${index}`}
+                      className={`flex aspect-square sm:aspect-4/3 w-full flex-col items-center justify-center rounded-lg sm:rounded-xl border border-dashed border-stone-300 bg-stone-50/50 hover:bg-stone-100/70 hover:border-[#844353] transition-colors cursor-pointer text-stone-400 ${
+                        isUploading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
+                    >
+                      <Plus className="h-3 w-3 sm:h-4 sm:w-4 text-stone-400" />
+                      <span className="text-[8px] sm:text-[10px] font-medium mt-0.5 text-stone-500">
+                        {index === 0 ? "Cover" : `Photo ${index + 1}`}
+                      </span>
+                      <input
+                        id={`photo-upload-${index}`}
+                        type="file"
+                        accept="image/*"
+                        disabled={isUploading}
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  );
+                })}
               </div>
-            )}
+            </div>
+
           </div>
         </div>
 

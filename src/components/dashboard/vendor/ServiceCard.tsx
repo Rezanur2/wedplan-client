@@ -47,36 +47,36 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-black/30" />
 
         {/* Top Badges Row */}
-        <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 min-w-0">
             {isPending ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur-xs px-2.5 py-1 text-[11px] font-medium text-white shadow-xs">
-                <Clock className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-white shadow-xs whitespace-nowrap shrink-0">
+                <Clock className="h-3 w-3 shrink-0" />
                 Pending Approval
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-xs px-2.5 py-1 text-[11px] font-medium text-stone-800 shadow-xs">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-stone-800 shadow-xs whitespace-nowrap shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                 Active
               </span>
             )}
 
             {/* Category Badge */}
-            <span className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-xs px-2.5 py-1 text-[11px] font-medium text-white/90">
+            <span className="inline-flex items-center rounded-full bg-black/40 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-white/90 whitespace-nowrap truncate">
               {service.category}
             </span>
           </div>
 
           {/* Right badge / action */}
           {isPending ? (
-            <span className="inline-flex items-center rounded-full bg-stone-900/80 backdrop-blur-xs px-2.5 py-1 text-[11px] font-medium text-stone-200">
+            <span className="hidden sm:inline-flex items-center rounded-full bg-stone-900/80 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-stone-200 whitespace-nowrap shrink-0">
               Under Review
             </span>
           ) : (
             <button
               type="button"
               title="Preview listing"
-              className="rounded-lg bg-black/40 backdrop-blur-xs p-1.5 text-white transition hover:bg-black/60 cursor-pointer"
+              className="rounded-lg bg-black/40 backdrop-blur-xs p-1.5 text-white transition hover:bg-black/60 cursor-pointer shrink-0"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </button>

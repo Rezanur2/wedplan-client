@@ -53,5 +53,9 @@ export interface IVendorService extends ServiceFormData {
   bookings?: number;
   features?: string[];
   reviewNotice?: string;
+  vendorName?: string;
+  vendorAvatar?: string;
+  vendorSubtitle?: string;
+  businessName?: string;
 }
 

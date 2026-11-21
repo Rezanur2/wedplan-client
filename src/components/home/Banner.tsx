@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   ArrowUpRight,
   Search,
@@ -21,12 +22,24 @@ import {
 } from "@/components/ui/select";
 
 export default function Banner() {
+  const router = useRouter();
 
-  const handleSearch = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const data = Object.fromEntries(formData.entries());
-    console.log("Data From the form", data);
+    const discipline = (formData.get("discipline") as string) || "";
+    const destination = ((formData.get("destination") as string) || "").trim();
+
+    const params = new URLSearchParams();
+    if (discipline && discipline !== "All Specialties") {
+      params.set("category", discipline);
+    }
+    if (destination) {
+      params.set("location", destination);
+    }
+
+    const queryString = params.toString();
+    router.push(queryString ? `/services?${queryString}` : "/services");
   };
    
   return (
