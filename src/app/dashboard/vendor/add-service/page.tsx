@@ -18,6 +18,7 @@ export default async function AddServicePage() {
   return (
     <div className="w-full">
       <AddServiceForm
+        user={user}
         vendorId={user?.id}
         subscriptionPlan={user?.subscriptionPlan || "free"}
       />

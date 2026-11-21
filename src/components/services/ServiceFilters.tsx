@@ -200,7 +200,7 @@ export default function ServiceFilters({
               handleFilterChange("category", newCat);
             }}
           >
-            <SelectTrigger className="w-full !h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 px-3.5 text-xs sm:text-sm text-stone-800 transition hover:border-[#844353] focus-visible:border-[#844353] focus-visible:ring-0 flex items-center justify-between cursor-pointer">
+            <SelectTrigger className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 px-3.5 text-xs sm:text-sm text-stone-800 transition hover:border-[#844353] focus-visible:border-[#844353] focus-visible:ring-0 flex items-center justify-between cursor-pointer">
               <span className="truncate">{currentCategoryLabel}</span>
             </SelectTrigger>
             <SelectContent className="rounded-2xl border border-stone-200/90 bg-white p-1.5 shadow-xl min-w-60">
@@ -242,7 +242,7 @@ export default function ServiceFilters({
                 handleFilterChange("sort", val);
               }}
             >
-              <SelectTrigger className="w-full !h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 px-3 text-xs sm:text-sm text-stone-800 transition hover:border-[#844353] focus-visible:border-[#844353] focus-visible:ring-0 flex items-center justify-between cursor-pointer">
+              <SelectTrigger className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 px-3 text-xs sm:text-sm text-stone-800 transition hover:border-[#844353] focus-visible:border-[#844353] focus-visible:ring-0 flex items-center justify-between cursor-pointer">
                 <div className="flex items-center gap-2 truncate">
                   <SlidersHorizontal className="h-3.5 w-3.5 text-stone-600 shrink-0" />
                   <span className="truncate">{currentSortLabel}</span>

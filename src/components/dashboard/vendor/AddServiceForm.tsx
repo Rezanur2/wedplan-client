@@ -14,6 +14,9 @@ import {
   ArrowRight,
   CheckCircle2,
   Plus,
+  User,
+  Mail,
+  Building2,
 } from "lucide-react";
 import VendorPlanBanner from "./VendorPlanBanner";
 import { Input } from "@/components/ui/input";
@@ -28,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/toast";
 import { uploadImageToImgBB } from "@/lib/uploadImage";
-import { ServiceFormData } from "@/types";
+import { ServiceFormData, IDashboardUser } from "@/types";
 import { createService } from "@/lib/actions/services";
 
 
@@ -49,12 +52,14 @@ const PRICING_TYPES = [
 ];
 
 interface AddServiceFormProps {
+  user?: IDashboardUser;
   vendorId?: string;
   subscriptionPlan?: string;
   activeServiceCount?: number;
 }
 
 export default function AddServiceForm({
+  user,
   vendorId = "",
   subscriptionPlan = "free",
   activeServiceCount = 2,
@@ -185,7 +190,11 @@ export default function AddServiceForm({
       ...form,
       price: Number(form.price),
       images: images,
-      vendorId: vendorId || "",
+      vendorId: user?.id || vendorId || "",
+      vendorName: user?.name || "Verified Vendor",
+      vendorEmail: user?.email || "",
+      vendorAvatar: user?.image || "",
+      businessName: user?.businessName || user?.name || "Wedding Specialist",
       status: "Pending",
       createdAt: new Date().toISOString(),
     };
@@ -613,6 +622,78 @@ export default function AddServiceForm({
               </div>
             </div>
 
+          </div>
+        </div>
+
+        {/* Section 3: Vendor Profile Information */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-stone-900 text-white">
+                <User className="h-3.5 w-3.5" />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-stone-900">
+                  Vendor Profile Information
+                </h2>
+                <p className="text-[11px] text-stone-500">
+                  Automatically attached from your verified account
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+              <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+              Verified Account
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <Label className="text-xs font-semibold mb-1 block text-stone-600">
+                Vendor Name
+              </Label>
+              <div className="relative mt-1">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
+                <Input
+                  readOnly
+                  disabled
+                  value={user?.name || "Verified Vendor"}
+                  className="h-9 pl-8 text-xs rounded-xl bg-stone-100/80 text-stone-600 cursor-not-allowed border-stone-200"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold mb-1 block text-stone-600">
+                Vendor Email
+              </Label>
+              <div className="relative mt-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
+                <Input
+                  readOnly
+                  disabled
+                  value={user?.email || ""}
+                  className="h-9 pl-8 text-xs rounded-xl bg-stone-100/80 text-stone-600 cursor-not-allowed border-stone-200"
+                />
+              </div>
+            </div>
+
+            {user?.businessName && (
+              <div className="sm:col-span-2">
+                <Label className="text-xs font-semibold mb-1 block text-stone-600">
+                  Business Name
+                </Label>
+                <div className="relative mt-1">
+                  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-stone-400" />
+                  <Input
+                    readOnly
+                    disabled
+                    value={user.businessName}
+                    className="h-9 pl-8 text-xs rounded-xl bg-stone-100/80 text-stone-600 cursor-not-allowed border-stone-200"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

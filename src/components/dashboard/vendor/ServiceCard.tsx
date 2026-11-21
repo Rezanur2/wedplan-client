@@ -73,13 +73,13 @@ export default function ServiceCard({ service }: ServiceCardProps) {
               Under Review
             </span>
           ) : (
-            <button
-              type="button"
-              title="Preview listing"
-              className="rounded-lg bg-black/40 backdrop-blur-xs p-1.5 text-white transition hover:bg-black/60 cursor-pointer shrink-0"
+            <Link
+              href={`/services/${service._id || service.id}`}
+              title="View Service Details"
+              className="rounded-lg bg-black/40 backdrop-blur-xs p-1.5 text-white transition hover:bg-black/60 cursor-pointer shrink-0 inline-flex items-center justify-center"
             >
               <ExternalLink className="h-3.5 w-3.5" />
-            </button>
+            </Link>
           )}
         </div>
 
@@ -118,36 +118,6 @@ export default function ServiceCard({ service }: ServiceCardProps) {
         <p className="mt-1.5 text-xs text-stone-500 line-clamp-2">
           {service.description}
         </p>
-
-        {/* Active Service: Views, Inquiries, Bookings Stats */}
-        {!isPending && (
-          <div className="my-3.5 grid grid-cols-3 divide-x divide-stone-200 rounded-xl bg-stone-50 p-2.5 text-center">
-            <div>
-              <div className="text-sm font-bold text-stone-800">
-                {(service.views ?? 0).toLocaleString()}
-              </div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                Views
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-stone-800">
-                {service.inquiries ?? 0}
-              </div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                Inquiries
-              </div>
-            </div>
-            <div>
-              <div className="text-sm font-bold text-stone-800">
-                {service.bookings ?? 0}
-              </div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-stone-400">
-                Bookings
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Pending Service: Review Notice Box */}
         {isPending && (

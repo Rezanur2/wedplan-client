@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, MapPin, Heart } from "lucide-react";
 import { IVendorService } from "@/types";
 
@@ -11,6 +12,7 @@ interface ServiceCardProps {
 }
 
 export default function ServiceCard({ service }: ServiceCardProps) {
+  const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(false);
 
   const fallbackImage =
@@ -21,6 +23,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
   const vendorName = service.vendorName || "Hearth & Vine";
   const companyName = service.businessName || service.vendorSubtitle || "Wedding Specialists";
+
+  const handleViewServiceDetails = (serviceId: string) => {
+    router.push(`/services/${serviceId}`);
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-stone-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col justify-between h-full group">
@@ -60,14 +66,13 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             />
           </button>
 
-          {/* Bottom Gradient Overlay: Location on Left & Price Badge on Right */}
+          {/* Bottom Gradient Overlay: Location & Price Badge */}
           <div className="absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-black/75 via-black/35 to-transparent flex items-end justify-between px-3 pb-1.5 text-white/90">
             <div className="flex items-center gap-1 text-[11px] font-medium truncate max-w-[60%]">
               <MapPin className="w-3 h-3 text-stone-200 shrink-0" />
               <span className="truncate">{service.location || "On Request"}</span>
             </div>
 
-            {/* Price Badge */}
             <span className="rounded-lg bg-stone-900/85 px-2.5 py-0.5 text-xs font-bold text-white shadow-xs backdrop-blur-xs shrink-0">
               ${priceNumber.toLocaleString()}
             </span>
@@ -102,7 +107,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
       {/* 3. Bottom Section: Vendor Profile & View Details Button */}
       <div className="mt-3.5">
-        {/* Vendor Profile Row right above View Details button */}
+        {/* Vendor Profile Row */}
         <div className="pt-3 border-t border-stone-100 flex items-center gap-2.5 mb-3">
           {service.vendorAvatar ? (
             <Image
@@ -128,16 +133,16 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           </div>
         </div>
 
-        {/* Full-Width View Details Button */}
-        <Link
-          href={`/services/${serviceId}`}
+        {/* View Details Button */}
+        <button
+          type="button"
+          onClick={() => handleViewServiceDetails(serviceId)}
           className="w-full inline-flex items-center justify-center space-x-2 bg-[#844353] hover:bg-[#723645] text-white text-xs font-semibold py-2.5 rounded-xl shadow-2xs transition-all duration-200 group-hover:shadow-xs cursor-pointer"
         >
           <span>View Details</span>
           <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-        </Link>
+        </button>
       </div>
-
     </div>
   );
 }

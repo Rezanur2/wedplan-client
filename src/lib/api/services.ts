@@ -30,6 +30,20 @@ export const getMyServices = async (vendorId?: string): Promise<ServiceFormData[
   }
 };
 
+// Get Service By Id
+export const getServiceById = async (serviceId: string) => {
+  try {
+    const res = await fetch(`${BASE_URL}/services/${serviceId}`, {
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    return res.json();
+  } catch (error) {
+    console.error("Error fetching service by id:", error);
+    return null;
+  }
+};
+
 export const createService = async (data: ServiceFormData) => {
   const res = await fetch(`${BASE_URL}/services`, {
     method: "POST",

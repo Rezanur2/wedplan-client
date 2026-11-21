@@ -1,9 +1,7 @@
-import React, { Suspense } from "react";
-import Link from "next/link";
-import { CheckCircle2, ShieldCheck, RotateCcw, SearchX } from "lucide-react";
-import ServiceCard from "@/components/services/ServiceCard";
+import React from "react";
+import { CheckCircle2, ShieldCheck } from "lucide-react";
 import ServiceFilters from "@/components/services/ServiceFilters";
-import ResetFiltersButton from "@/components/services/ResetFiltersButton";
+import ServiceList from "@/components/services/ServiceList";
 import { getServices } from "@/lib/api/services";
 import { IVendorService } from "@/types";
 
@@ -16,89 +14,13 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-// 1. Skeleton loader for the services grid
-function ServicesLoadingSkeleton() {
-  return (
-    <div className="mt-8">
-      <p className="text-xs text-stone-500 mb-4 animate-pulse">Loading services...</p>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="flex flex-col overflow-hidden rounded-2xl border border-stone-200/70 bg-white p-3.5 shadow-xs"
-          >
-            <div className="h-44 sm:h-48 w-full rounded-xl bg-stone-200/80 animate-pulse" />
-            <div className="mt-3 space-y-2">
-              <div className="h-3 w-20 rounded bg-stone-200 animate-pulse" />
-              <div className="h-4 w-3/4 rounded bg-stone-200 animate-pulse" />
-              <div className="h-3 w-full rounded bg-stone-200/70 animate-pulse" />
-              <div className="pt-3 border-t border-stone-100 flex justify-between items-center">
-                <div className="h-7 w-20 rounded bg-stone-200 animate-pulse" />
-                <div className="h-9 w-full rounded-xl bg-stone-200 animate-pulse" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// 2. Async Services Grid that fetches data independently inside Suspense
-async function ServicesGrid({ query }: { query: string }) {
-  const services = (await getServices(query)) as IVendorService[];
-
-  if (services.length === 0) {
-    return (
-      <div className="mt-12 flex flex-col items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white p-12 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-[#844353]">
-          <SearchX className="h-6 w-6" />
-        </div>
-        <h3 className="mt-4 font-serif text-lg font-bold text-stone-900">
-          No Wedding Services Found
-        </h3>
-        <p className="mt-1 max-w-sm text-xs text-stone-500">
-          We couldn&apos;t find any vendors matching your current search or category filter. Try clearing your search or adjusting the location.
-        </p>
-        <ResetFiltersButton />
-      </div>
-    );
-  }
-
-  return (
-    <>
-      {/* Status Sub-bar */}
-      <div className="mt-4 flex flex-col gap-2 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between px-1">
-        <div className="flex items-start sm:items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0 text-[#844353] mt-0.5 sm:mt-0" />
-          <span className="leading-relaxed">
-            Every vendor is personally vetted for safety, style, and responsiveness.
-          </span>
-        </div>
-
-        <div className="shrink-0 text-stone-600 pl-6 sm:pl-0">
-          Showing <span className="font-semibold text-stone-900">{services.length}</span> verified services
-        </div>
-      </div>
-
-      {/* Cards Grid */}
-      <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
-          <ServiceCard
-            key={service._id || service.id}
-            service={service}
-          />
-        ))}
-      </div>
-    </>
-  );
-}
-
-// 3. Main Page
 export default async function BrowseServicesPage({ searchParams }: PageProps) {
   const search = await searchParams;
   const urlSearch = new URLSearchParams(search as Record<string, string>);
   const query = urlSearch.toString();
+
+  // 1. Fetch data directly from backend
+  const services = (await getServices(query)) as IVendorService[];
 
   const currentSearch = (search.search as string) || "";
   const currentCategory = (search.category as string) || "All";
@@ -127,7 +49,7 @@ export default async function BrowseServicesPage({ searchParams }: PageProps) {
           </div>
         </div>
 
-        {/* Search & Filter Bar*/}
+        {/* Search & Filter Controls */}
         <ServiceFilters
           initialSearch={currentSearch}
           initialCategory={currentCategory}
@@ -135,10 +57,22 @@ export default async function BrowseServicesPage({ searchParams }: PageProps) {
           initialSort={currentSort}
         />
 
-        {/* Suspense Boundary ONLY for the cards grid */}
-        <Suspense key={query} fallback={<ServicesLoadingSkeleton />}>
-          <ServicesGrid query={query} />
-        </Suspense>
+        {/* Status Sub-bar */}
+        <div className="mt-4 flex flex-col gap-2 text-xs text-stone-500 sm:flex-row sm:items-center sm:justify-between px-1">
+          <div className="flex items-start sm:items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#844353] mt-0.5 sm:mt-0" />
+            <span className="leading-relaxed">
+              Every vendor is personally vetted for safety, style, and responsiveness.
+            </span>
+          </div>
+
+          <div className="shrink-0 text-stone-600 pl-6 sm:pl-0">
+            Showing <span className="font-semibold text-stone-900">{services.length}</span> verified services
+          </div>
+        </div>
+
+        {/* Services List */}
+        <ServiceList services={services} />
 
         {/* Strict Atelier Standard Banner */}
         <div className="mt-16 flex items-center justify-center px-2">

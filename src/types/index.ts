@@ -40,6 +40,10 @@ export interface ServiceFormData {
   description: string;
   images: string[];
   vendorId?: string;
+  vendorName?: string;
+  vendorEmail?: string;
+  vendorAvatar?: string;
+  businessName?: string;
   status?: TServiceStatus | string;
   createdAt?: string;
 }

@@ -48,7 +48,7 @@ export default function MyServicesList({
             My Services
           </h1>
           <p className="mt-1 text-xs text-stone-500">
-            Manage your wedding listings, track views and booking inquiries, or add new services.
+            Manage your wedding services, monitor approval status, or publish new listings.
           </p>
         </div>
 
