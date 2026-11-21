@@ -61,7 +61,7 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
   };
 
   return (
-    <div className="sticky top-24 rounded-2xl sm:rounded-3xl border border-stone-200/90 bg-white p-5 sm:p-7 shadow-xs">
+    <div className="w-full rounded-2xl sm:rounded-3xl border border-stone-200/90 bg-white p-5 sm:p-7 shadow-xs">
       
       {/*  Vendor cannot book their own service */}
       {isOwnService ? (

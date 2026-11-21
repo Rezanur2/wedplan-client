@@ -19,3 +19,14 @@ export const deleteService = async (serviceId: string) => {
     })
     return res.json();
 }
+
+export const updateService = async (serviceId: string, data: Partial<ServiceFormData>) => {
+    const res = await fetch(`${BASE_URL}/services/${serviceId}`, {
+        method: "PATCH",
+        headers: {
+            'content-type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+    return res.json();
+}

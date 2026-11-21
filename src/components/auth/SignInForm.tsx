@@ -9,13 +9,15 @@ import { Label } from "@/components/ui/label";
 import GoogleButton from "@/components/auth/GoogleButton";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "../ui/toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function SignInForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo") || searchParams.get("callbackUrl") || "/";
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,8 +38,7 @@ export default function SignInForm() {
       return;
     }
 
-    const data = Object.fromEntries(formData.entries());
-    console.log("Sign In Form Data:", data);
+    Object.fromEntries(formData.entries());
 
     const formElement = e.currentTarget;
 
@@ -46,6 +47,7 @@ export default function SignInForm() {
           email: email,
           password: password,
           rememberMe: true,
+          callbackURL: redirectTo,
       });
       if (error) {
         const msg = error.message ?? "Invalid email or password.";
@@ -65,8 +67,10 @@ export default function SignInForm() {
         description: `Welcome back, ${data?.user?.name || "User"}!`,
         type: "success",
       });
-      router.push("/");
-      router.refresh();
+      if (!data.redirect) {        
+        router.push(redirectTo);
+        router.refresh();
+      }
     } catch (err) {
       console.error(err);
     }
@@ -125,6 +129,7 @@ export default function SignInForm() {
       <div className="mt-5">
         <GoogleButton
           label="Continue with Google"
+          callbackURL={redirectTo}
         />
       </div>
 

@@ -8,9 +8,10 @@ interface GoogleButtonProps {
   label: string;
   onClick?: () => void;
   role?: "customer" | "vendor";
+  callbackURL?: string;
 }
 
-export default function GoogleButton({ label, onClick, role }: GoogleButtonProps) {
+export default function GoogleButton({ label, onClick, role, callbackURL }: GoogleButtonProps) {
 
   const [loading, setLoading] = useState(false);
 
@@ -19,7 +20,7 @@ export default function GoogleButton({ label, onClick, role }: GoogleButtonProps
       setLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/?auth=google_success",
+        callbackURL: callbackURL || "/?auth=google_success",
         ...(role && {
           additionalData: {
             role: role,

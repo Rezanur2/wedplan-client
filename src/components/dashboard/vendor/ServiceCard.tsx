@@ -13,6 +13,7 @@ import {
 import { IVendorService } from "@/types";
 import { Button } from "@/components/ui/button";
 import { DeleteServiceDialog } from "./DeleteServiceDialog";
+import { EditServiceDialog } from "./EditServiceDialog";
 
 export interface ServiceCardProps {
   service: IVendorService;
@@ -163,13 +164,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             </span>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-lg border-stone-200 text-xs font-medium text-stone-700 hover:bg-white"
-              >
-                Edit Submission
-              </Button>
+              <EditServiceDialog service={service} />
               <DeleteServiceDialog service={service} />
             </div>
           </div>
@@ -197,16 +192,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
               </span>
             </div>
 
-            {/* Actions: Edit & Dropdown Menu */}
+            {/* Actions: Edit & Delete */}
             <div className="flex items-center gap-1.5">
-              <Link
-                href="/dashboard/vendor/add-service"
-                className="inline-flex h-8 items-center justify-center rounded-lg border border-stone-200 px-3 text-xs font-medium text-stone-700 hover:bg-black hover:text-white transition"
-              >
-                <Pencil className="mr-2 h-3.5 w-3.5" />
-                Edit
-                </Link>
-                <DeleteServiceDialog service={service} />
+              <EditServiceDialog service={service} />
+              <DeleteServiceDialog service={service} />
             </div>
           </div>
         )}

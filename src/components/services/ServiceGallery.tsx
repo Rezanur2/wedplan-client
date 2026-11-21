@@ -24,7 +24,7 @@ export default function ServiceGallery({
   const activeImage = galleryImages[activeIndex] || galleryImages[0];
 
   return (
-    <div className="space-y-4">
+    <div className="w-full max-w-full space-y-4">
       {/* 1. Main Large Active Image */}
       <div className="relative aspect-16/10 sm:aspect-video w-full overflow-hidden rounded-2xl sm:rounded-3xl border border-stone-200/90 bg-stone-100 shadow-xs">
         <Image
@@ -46,7 +46,7 @@ export default function ServiceGallery({
 
       {/* 2. Thumbnails Row */}
       {galleryImages.length > 1 && (
-        <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto p-1.5 no-scrollbar">
+        <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto p-1.5 no-scrollbar max-w-full">
           {galleryImages.map((imgUrl, index) => {
             const isActive = index === activeIndex;
 

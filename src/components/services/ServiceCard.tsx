@@ -2,10 +2,10 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, MapPin, Heart } from "lucide-react";
 import { IVendorService } from "@/types";
+import { useSession } from "@/lib/auth-client";
 
 interface ServiceCardProps {
   service: IVendorService;
@@ -14,6 +14,8 @@ interface ServiceCardProps {
 export default function ServiceCard({ service }: ServiceCardProps) {
   const router = useRouter();
   const [isFavorite, setIsFavorite] = useState(false);
+  const { data: session } = useSession();
+  const user = session?.user;
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800";
@@ -24,8 +26,12 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const vendorName = service.vendorName || "Hearth & Vine";
   const companyName = service.businessName || service.vendorSubtitle || "Wedding Specialists";
 
-  const handleViewServiceDetails = (serviceId: string) => {
-    router.push(`/services/${serviceId}`);
+  const handleViewServiceDetails = (id: string) => {
+    if (!user) {
+      router.push(`/signin?redirectTo=/services/${id}`);
+      return;
+    }
+    router.push(`/services/${id}`);
   };
 
   return (
@@ -90,14 +96,18 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             </span>
           </div>
 
-          <Link href={`/services/${serviceId}`}>
+          <button
+            type="button"
+            onClick={() => handleViewServiceDetails(serviceId)}
+            className="text-left w-full cursor-pointer block"
+          >
             <h3
               className="font-serif text-base font-bold text-stone-900 leading-snug line-clamp-1 group-hover:text-[#844353] transition-colors"
               title={service.serviceName}
             >
               {service.serviceName || "Wedding Service"}
             </h3>
-          </Link>
+          </button>
 
           <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
             {service.description || "A curated wedding service tailored to elevate your special day."}

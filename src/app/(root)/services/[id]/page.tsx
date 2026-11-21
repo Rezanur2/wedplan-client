@@ -27,7 +27,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user) {
-    redirect(`/signin?callbackUrl=/services/${id}`);
+    redirect(`/signin?redirectTo=/services/${id}`);
   }
     
   const service = await getServiceById(id);
@@ -64,7 +64,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
   const vendorAvatar = service.vendorAvatar || "";
 
   return (
-    <div className="min-h-screen bg-[#FCFBF9] pb-24 pt-6 overflow-x-hidden">
+    <div className="min-h-screen bg-[#FCFBF9] pb-24 pt-6 max-w-full overflow-x-clip">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs & Back Link (Responsive, single-line on mobile) */}
         <div className="mb-5 flex items-center justify-between gap-2 text-xs">
@@ -93,7 +93,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
         </div>
 
         {/* Main 2-Column Grid */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 min-w-0">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
           {/* Left Column: Image Gallery, Info, Details & Vendor Profile */}
           <div className="min-w-0 lg:col-span-7 xl:col-span-8 space-y-8">
             {/*  Photo Gallery (Active Image + Thumbnail Strip) */}
@@ -114,7 +114,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
                 </span>
               </div>
 
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight">
+              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight break-words">
                 {service.serviceName}
               </h1>
 
@@ -125,7 +125,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
             </div>
 
             {/* 3. Prominent Pricing & Investment Banner */}
-            <div className="rounded-2xl border border-[#E8D1D5]/80 bg-linear-to-r from-[#FDF8F9] via-[#FAF3F5] to-white p-4.5 sm:p-6 shadow-2xs">
+            <div className="rounded-2xl border border-[#E8D1D5]/80 bg-linear-to-r from-[#FDF8F9] via-[#FAF3F5] to-white p-4 sm:p-6 shadow-2xs">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-[#844353]">
@@ -210,9 +210,9 @@ export default async function ServiceDetailsPage({ params }: Props) {
                         {vendorEmail && (
                           <>
                             <span>•</span>
-                            <span className="inline-flex items-center gap-1">
-                              <Mail className="h-3.5 w-3.5 text-stone-400" />
-                              {vendorEmail}
+                            <span className="inline-flex items-center gap-1 truncate max-w-[200px] sm:max-w-none">
+                              <Mail className="h-3.5 w-3.5 text-stone-400 shrink-0" />
+                              <span className="truncate">{vendorEmail}</span>
                             </span>
                           </>
                         )}
@@ -229,7 +229,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
           </div>
 
           {/* Right Column: Sticky Booking Request Card */}
-          <div className="lg:col-span-5 xl:col-span-4">
+          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 self-start">
             <BookingCard
               service={service}
               currentUser={session.user as IDashboardUser}
