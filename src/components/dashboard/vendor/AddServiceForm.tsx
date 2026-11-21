@@ -13,8 +13,8 @@ import {
   MapPin,
   ArrowRight,
   CheckCircle2,
-  PieChart,
 } from "lucide-react";
+import VendorPlanBanner from "./VendorPlanBanner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -215,48 +215,10 @@ export default function AddServiceForm({
       </div>
 
       {/* 2. Plan Banner */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100">
-            <PieChart className="h-5 w-5 text-[#844353]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h4 className="text-xs font-bold text-stone-900">
-                {isPremium
-                  ? "Premium Plan: Unlimited"
-                  : `Free Plan: ${activeServiceCount} of 3 services used`}
-              </h4>
-              {!isPremium && (
-                <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
-                  {Math.max(0, 3 - activeServiceCount)} slot left
-                </span>
-              )}
-            </div>
-            <p className="text-[11px] text-stone-500">
-              Free accounts can list up to 3 services. Upgrade to Premium for
-              unlimited listings.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          {!isPremium && (
-            <div className="h-2 w-20 rounded-full bg-stone-100 overflow-hidden">
-              <div
-                className="h-full bg-[#844353]"
-                style={{ width: `${(activeServiceCount / 3) * 100}%` }}
-              />
-            </div>
-          )}
-          <Link
-            href="/dashboard/vendor/subscription"
-            className="rounded-xl border border-[#844353] px-3.5 py-1.5 text-xs font-semibold text-[#844353] hover:bg-rose-50"
-          >
-            Upgrade Plan
-          </Link>
-        </div>
-      </div>
+      <VendorPlanBanner
+        activeCount={activeServiceCount}
+        isPremium={isPremium}
+      />
 
       {/* 3. Main Form Card */}
       <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8 space-y-6 shadow-xs">

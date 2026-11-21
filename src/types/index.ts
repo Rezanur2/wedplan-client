@@ -27,6 +27,10 @@ export interface DashboardSidebarProps {
   user?: IDashboardUser | null;
 }
 
+//SERVICE TYPES
+export type TServiceStatus = "Active" | "Pending" | "Under Review";
+export type TFilterTab = "all" | "active" | "review";
+
 export interface ServiceFormData {
   serviceName: string;
   category: string;
@@ -36,7 +40,7 @@ export interface ServiceFormData {
   description: string;
   images: string[];
   vendorId?: string;
-  status?: string;
+  status?: TServiceStatus | string;
   createdAt?: string;
 }
 

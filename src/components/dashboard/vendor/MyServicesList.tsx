@@ -5,14 +5,12 @@ import Link from "next/link";
 import {
   Plus,
   BarChart3,
-  PieChart,
   ShieldCheck,
 } from "lucide-react";
-import { IVendorService } from "@/types";
+import { IVendorService, TFilterTab } from "@/types";
 import ServiceCard from "./ServiceCard";
 import EmptySlotCard from "./EmptySlotCard";
-
-type FilterTab = "all" | "active" | "review";
+import VendorPlanBanner from "./VendorPlanBanner";
 
 interface MyServicesListProps {
   services?: IVendorService[];
@@ -21,7 +19,7 @@ interface MyServicesListProps {
 export default function MyServicesList({
   services = [],
 }: MyServicesListProps) {
-  const [activeTab, setActiveTab] = useState<FilterTab>("all");
+  const [activeTab, setActiveTab] = useState<TFilterTab>("all");
 
   // Tab counts
   const totalCount = services.length;
@@ -75,42 +73,7 @@ export default function MyServicesList({
       </div>
 
       {/* 2. Plan Banner */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-stone-200 bg-white p-4 sm:p-5 shadow-2xs md:flex-row md:items-center md:justify-between">
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-100">
-            <PieChart className="h-5 w-5 text-[#844353]" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-sm font-semibold text-stone-900">
-                Free Plan: {services.length} of 3 services used
-              </h2>
-              <span className="rounded-full bg-pink-100/80 px-2 py-0.5 text-[10px] font-semibold text-pink-700">
-                {Math.max(0, 3 - services.length)} slot left
-              </span>
-            </div>
-            <p className="mt-0.5 text-xs text-stone-500">
-              Free accounts can list up to 3 services. Upgrade to Premium for unlimited listings and priority display.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3.5 shrink-0 self-end md:self-center">
-          <div className="h-2 w-24 rounded-full bg-stone-100 overflow-hidden">
-            <div
-              className="h-full bg-[#844353] transition-all"
-              style={{ width: `${(services.length / 3) * 100}%` }}
-            />
-          </div>
-
-          <Link
-            href="/dashboard/vendor/subscription"
-            className="inline-flex items-center justify-center rounded-lg border border-[#844353] px-3.5 py-1.5 text-xs font-semibold text-[#844353] hover:bg-rose-50 transition"
-          >
-            Upgrade Plan
-          </Link>
-        </div>
-      </div>
+      <VendorPlanBanner activeCount={services.length} />
 
       {/* 3. Filter Tabs & Accreditation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">

@@ -2,17 +2,13 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, User, LogOut, LayoutDashboard, Settings, ChevronDown } from "lucide-react";
-import { signOut, useSession } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
 import { toast } from "@/components/ui/toast";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import Logo from "./Logo";
+import UserDropdown from "./UserDropdown";
+import { IDashboardUser } from "@/types";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -22,39 +18,9 @@ const navLinks = [
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const router = useRouter()
 
-  // Authentication state
   const { data: session } = useSession();
-  const user = session?.user;
-  const hasValidImage = Boolean(
-    user?.image &&
-      (user.image.startsWith("http://") ||
-        user.image.startsWith("https://") ||
-        user.image.startsWith("/"))
-  );
-  const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : null;
-
-  const renderUserAvatar = (size: number, textClass = "text-xs") => (
-    <div
-      style={{ width: size, height: size }}
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#844353] ${textClass} font-bold text-white shadow-2xs`}
-    >
-      {hasValidImage ? (
-        <Image
-          src={user!.image!}
-          alt={user?.name || "User Avatar"}
-          width={size}
-          height={size}
-          className="h-full w-full object-cover"
-        />
-      ) : userInitial ? (
-        <span className="font-semibold uppercase select-none">{userInitial}</span>
-      ) : (
-        <User className="h-3.5 w-3.5 text-white" />
-      )}
-    </div>
-  );
+  const user = session?.user as IDashboardUser | undefined;
 
   // Show toast when returning from Google OAuth redirect
   useEffect(() => {
@@ -72,83 +38,12 @@ export default function Navbar() {
     }
   }, [user]);
 
-  const handleSignOut = async () => {
-    setIsOpen(false);
-    await signOut();
-    toast.add({
-      title: "Signed Out",
-      description: "You have been logged out safely.",
-      type: "info",
-    });
-    router.push("/signin");
-    router.refresh();
-  };
-
-  const dashboardHref = `/dashboard/${user?.role || "customer"}`;
-  const profileHref = `${dashboardHref}/profile`;
-
-  const profileMenuContent = (
-    <DropdownMenuContent align="end" className="w-52 rounded-xl border border-stone-200 bg-white p-1.5 shadow-lg">
-      <div className="flex items-center gap-2.5 border-b border-stone-100 px-2.5 py-2">
-        {renderUserAvatar(32)}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-xs font-semibold text-stone-800">
-            {user?.name}
-          </p>
-          <p className="truncate text-[11px] text-stone-500">
-            {user?.email}
-          </p>
-        </div>
-      </div>
-
-      <div className="pt-1">
-        <DropdownMenuItem
-          render={<Link href={dashboardHref} />}
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-stone-700 hover:bg-stone-100 cursor-pointer"
-        >
-          <LayoutDashboard className="h-3.5 w-3.5" />
-          Dashboard
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          render={<Link href={profileHref} />}
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-stone-700 hover:bg-stone-100 cursor-pointer"
-        >
-          <Settings className="h-3.5 w-3.5" />
-          Profile Settings
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={handleSignOut}
-          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs text-red-600 hover:bg-red-50 cursor-pointer"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Logout
-        </DropdownMenuItem>
-      </div>
-    </DropdownMenuContent>
-  );
-
   return (
     <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-[#FAF6F7]/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         
         {/* Brand / Logo */}
-        <Link href="/" className="group flex items-center gap-2.5">
-          <div className="relative h-10 w-10 overflow-hidden rounded-xl shadow-xs transition-transform duration-200 group-hover:scale-105">
-            <Image
-              src="/images/logo.png"
-              alt="WedPlan Logo"
-              fill
-              sizes="40px"
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div className="flex items-baseline gap-1.5">
-            <span className="font-serif text-2xl font-bold tracking-tight text-stone-900">
-              Wed <span className="text-[#844353]">Plan</span>
-            </span>
-          </div>
-        </Link>
+        <Logo />
 
         {/* Desktop Navigation Links */}
         <nav className="hidden items-center gap-6 md:flex">
@@ -173,16 +68,8 @@ export default function Navbar() {
         {/* Desktop Auth Controls */}
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
-            /* User Avatar and Dropdown */
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 rounded-full border border-stone-200/90 bg-white p-1 pr-2.5 shadow-2xs hover:bg-[#FAF5F7] transition-colors cursor-pointer outline-none">
-                {renderUserAvatar(28)}
-                <ChevronDown className="h-3.5 w-3.5 text-stone-500" />
-              </DropdownMenuTrigger>
-              {profileMenuContent}
-            </DropdownMenu>
+            <UserDropdown user={user} />
           ) : (
-            /* Sign In and Sign Up */
             <>
               <Link
                 href="/signin"
@@ -202,20 +89,12 @@ export default function Navbar() {
 
         {/* Mobile Header Controls */}
         <div className="flex items-center gap-2 md:hidden">
-          {user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1.5 rounded-full border border-stone-200/90 bg-white p-1 pr-2 shadow-2xs hover:bg-[#FAF5F7] transition-colors cursor-pointer outline-none">
-                {renderUserAvatar(24, "text-[11px]")}
-                <ChevronDown className="h-3 w-3 text-stone-500" />
-              </DropdownMenuTrigger>
-              {profileMenuContent}
-            </DropdownMenu>
-          )}
+          {user && <UserDropdown user={user} />}
 
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="rounded-md p-2 text-stone-700 hover:bg-stone-200/50"
+            className="rounded-md p-2 text-stone-700 hover:bg-stone-200/50 cursor-pointer"
             aria-label="Toggle Menu"
           >
             {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

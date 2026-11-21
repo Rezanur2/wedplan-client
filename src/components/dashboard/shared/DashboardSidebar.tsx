@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "@/lib/auth-client";
+import Logo from "@/components/shared/Logo";
 import {
   Sidebar,
   SidebarContent,
@@ -153,37 +154,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps = {}) {
       : pathname === href || pathname.startsWith(`${href}/`);
   };
 
-  // User fields from authenticated user prop
-  const businessName = user?.businessName;
-  const subscriptionPlan = user?.subscriptionPlan || "free";
-  const isPremium = subscriptionPlan.toLowerCase() === "premium";
-
-  const workspaceConfig = {
-    vendor: {
-      label: "Workspace",
-      title: businessName || user?.name || "Vendor Studio",
-      badge: isPremium ? "Premium" : "Free Plan",
-      badgeClass: isPremium
-        ? "border-amber-300 bg-amber-50 text-amber-800"
-        : "border-rose-200/80 bg-[#FCECEE] text-[#844353]",
-      subtitle: businessName && user?.name ? user.name : "Verified Vendor",
-    },
-    customer: {
-      label: "Workspace",
-      title: user?.name ? `${user.name}'s Wedding` : "My Wedding Plan",
-      badge: "Couple",
-      badgeClass: "border-stone-200 bg-stone-100 text-stone-700",
-      subtitle: user?.email || "Active Planning",
-    },
-    admin: {
-      label: "Control Center",
-      title: "Admin Console",
-      badge: "Administrator",
-      badgeClass: "border-purple-200 bg-purple-50 text-purple-700",
-      subtitle: user?.email || "System Management",
-    },
-  }[role];
-
+  const isPremium = (user?.subscriptionPlan || "free").toLowerCase() === "premium";
   const userInitial = user?.name?.charAt(0).toUpperCase() || "U";
   const hasValidImage = Boolean(user?.image && typeof user.image === "string" && user.image.trim() !== "");
   const displayName =
@@ -208,44 +179,22 @@ export function DashboardSidebar({ user }: DashboardSidebarProps = {}) {
   return (
     <Sidebar
       collapsible="icon"
-      className="top-16! h-[calc(100svh-4rem)]! border-r border-[#EFE5E9] bg-[#FAF5F7]!"
+      className="top-0! h-svh! border-r border-[#EFE5E9] bg-[#FAF5F7]!"
     >
-      {/* Sidebar Header */}
       <SidebarHeader className="border-b border-[#EFE5E9] p-3 bg-[#FAF5F7]">
-        {/* Expanded View */}
-        <div className="group-data-[collapsible=icon]:hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold tracking-wider text-stone-400 uppercase">
-              {workspaceConfig.label}
-            </span>
-            <SidebarTrigger className="h-6 w-6 rounded-md text-stone-500 hover:bg-[#F3E8EC] hover:text-stone-900 border-none shadow-none cursor-pointer" />
-          </div>
-          <div className="flex items-center gap-2 mt-1">
-            <h3 className="font-serif text-sm font-bold text-stone-900 truncate max-w-37.5">
-              {workspaceConfig.title}
-            </h3>
-            <span className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold", workspaceConfig.badgeClass)}>
-              {workspaceConfig.badge}
-            </span>
-          </div>
-          <p className="text-[10px] text-stone-400 font-medium mt-0.5 truncate">
-            {workspaceConfig.subtitle}
-          </p>
+        <div className="flex items-center justify-between group-data-[collapsible=icon]:hidden">
+          <Logo />
+          <SidebarTrigger className="h-7 w-7 rounded-md text-stone-500 hover:bg-[#F3E8EC] hover:text-stone-900 border-none shadow-none cursor-pointer" />
         </div>
 
-        {/* Collapsed Mini Workspace Avatar */}
         <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center py-1">
           <Tooltip>
             <TooltipTrigger
-              render={
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#844353] text-xs font-bold text-white shadow-2xs cursor-pointer">
-                  {workspaceConfig.title.charAt(0).toUpperCase()}
-                </div>
-              }
+              render={<Logo iconOnly />}
             />
             <TooltipContent side="right">
-              <p className="font-semibold">{workspaceConfig.title}</p>
-              <p className="text-[10px] text-stone-400">{workspaceConfig.badge}</p>
+              <p className="font-semibold">WedPlan</p>
+              <p className="text-[10px] text-stone-400">Back to Home</p>
             </TooltipContent>
           </Tooltip>
         </div>

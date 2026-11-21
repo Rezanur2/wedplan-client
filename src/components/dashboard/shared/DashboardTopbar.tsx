@@ -1,14 +1,20 @@
 "use client";
 
+import React from "react";
 import { usePathname } from "next/navigation";
 import { useSidebar, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sparkles } from "lucide-react";
+import UserDropdown from "@/components/shared/UserDropdown";
+import { IDashboardUser } from "@/types";
 
-export function DashboardTopbar() {
+interface DashboardTopbarProps {
+  user?: IDashboardUser | null;
+}
+
+export function DashboardTopbar({ user }: DashboardTopbarProps) {
   const pathname = usePathname();
   const { state, isMobile } = useSidebar();
 
-  // URL path based title
   const title = pathname.startsWith("/dashboard/admin")
     ? "Admin Dashboard"
     : pathname.startsWith("/dashboard/customer")
@@ -16,7 +22,7 @@ export function DashboardTopbar() {
     : "Vendor Dashboard";
 
   return (
-    <header className="sticky top-16 z-20 flex h-12 w-full items-center border-b border-[#EFE5E9] bg-white/75 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-20 flex h-14 w-full items-center justify-between border-b border-[#EFE5E9] bg-[#FCFBF9]/90 px-4 backdrop-blur-md sm:px-6">
       <div className="flex items-center gap-3">
         {(state === "collapsed" || isMobile) && (
           <>
@@ -32,6 +38,8 @@ export function DashboardTopbar() {
           </span>
         </div>
       </div>
+
+      <UserDropdown user={user} />
     </header>
   );
 }
