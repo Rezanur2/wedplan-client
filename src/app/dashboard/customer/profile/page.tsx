@@ -1,11 +1,21 @@
-import React from 'react';
+import React from "react";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import ProfileSettingsForm from "@/components/dashboard/shared/ProfileSettingsForm";
 
-const CustomerProfilePage = () => {
-    return (
-        <div>
-            <h2>Customer Profile Page</h2>
-        </div>
-    );
-};
+export default async function CustomerProfilePage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-export default CustomerProfilePage;
+  if (!session?.user) {
+    redirect("/signin?redirectTo=/dashboard/customer/profile");
+  }
+
+  return (
+    <div className="w-full">
+      <ProfileSettingsForm user={session.user} />
+    </div>
+  );
+}

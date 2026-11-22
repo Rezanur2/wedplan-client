@@ -1,8 +1,9 @@
 import React from "react";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import AddServiceForm from "@/components/dashboard/vendor/AddServiceForm";
-import { getMyServices } from "@/lib/api/services";
+import { getServicesCount } from "@/lib/actions/services";
 import { IDashboardUser } from "@/types";
 
 export const metadata = {
@@ -12,10 +13,17 @@ export const metadata = {
 
 export default async function AddServicePage() {
   const session = await auth.api.getSession({
-    headers: await headers()
+    headers: await headers(),
   });
-  const user = session?.user as IDashboardUser;
-  const services = await getMyServices(user?.id);
+
+  if (!session?.user) {
+    redirect("/signin?redirectTo=/dashboard/vendor/add-service");
+  }
+
+  const user = session.user as IDashboardUser;
+  const countData = await getServicesCount(
+    user?.id ? `vendorId=${encodeURIComponent(user.id)}` : ""
+  );
 
   return (
     <div className="w-full">
@@ -23,7 +31,7 @@ export default async function AddServicePage() {
         user={user}
         vendorId={user?.id}
         subscriptionPlan={user?.subscriptionPlan || "free"}
-        activeServiceCount={services.length}
+        activeServiceCount={countData?.count || 0}
       />
     </div>
   );

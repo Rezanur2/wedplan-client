@@ -169,9 +169,10 @@ export default function AddServiceForm({
     if (isLimitReached) {
       toast.add({
         title: "Limit Reached",
-        description: "Upgrade to Premium for unlimited listings.",
+        description: "Free plan allows up to 3 services. Please upgrade to Premium.",
         type: "error",
       });
+      router.push("/dashboard/vendor/subscription");
       return;
     }
 

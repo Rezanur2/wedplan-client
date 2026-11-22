@@ -1,11 +1,21 @@
-import React from 'react';
+import React from "react";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
+import ProfileSettingsForm from "@/components/dashboard/shared/ProfileSettingsForm";
 
-const VendorProfilePage = () => {
-    return (
-        <div>
-            <h2>Vendor Profile Page</h2>
-        </div>
-    );
-};
+export default async function VendorProfilePage() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
-export default VendorProfilePage;
+  if (!session?.user) {
+    redirect("/signin?redirectTo=/dashboard/vendor/profile");
+  }
+
+  return (
+    <div className="w-full">
+      <ProfileSettingsForm user={session.user} />
+    </div>
+  );
+}
