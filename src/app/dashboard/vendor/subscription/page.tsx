@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { IDashboardUser } from "@/types";
 import { getServicesCount } from "@/lib/actions/services";
+import { getUserPremiumById } from "@/lib/api/user";
 import SubscriptionPlans from "@/components/dashboard/vendor/SubscriptionPlans";
 
 export const metadata = {
@@ -21,15 +22,18 @@ export default async function VendorSubscriptionPage() {
   }
 
   const user = session.user as IDashboardUser;
-  const countData = await getServicesCount(
-    user?.id ? `vendorId=${encodeURIComponent(user.id)}` : ""
-  );
+
+  const countResult = await getServicesCount(`vendorId=${user.id}`);
+  const premiumResult = await getUserPremiumById(user.id || "");
 
   return (
     <div className="w-full">
       <SubscriptionPlans
-        user={user}
-        activeServiceCount={countData?.count || 0}
+        user={{
+          ...user,
+          subscriptionPlan: premiumResult?.premium ? "premium" : "free",
+        }}
+        activeServiceCount={countResult.count}
       />
     </div>
   );

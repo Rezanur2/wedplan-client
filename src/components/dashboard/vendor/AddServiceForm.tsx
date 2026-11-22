@@ -33,7 +33,8 @@ import {
 import { toast } from "@/components/ui/toast";
 import { uploadImageToImgBB } from "@/lib/uploadImage";
 import { ServiceFormData, IDashboardUser } from "@/types";
-import { createService } from "@/lib/actions/services";
+import { createService, getServicesCount } from "@/lib/actions/services";
+import { getUserPremiumById } from "@/lib/api/user";
 
 
 const CATEGORIES = [
@@ -83,6 +84,7 @@ export default function AddServiceForm({
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  
   const isPremium = subscriptionPlan?.toLowerCase() === "premium";
   const isLimitReached = !isPremium && activeServiceCount >= 3;
 
@@ -166,14 +168,19 @@ export default function AddServiceForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isLimitReached) {
-      toast.add({
-        title: "Limit Reached",
-        description: "Free plan allows up to 3 services. Please upgrade to Premium.",
-        type: "error",
-      });
-      router.push("/dashboard/vendor/subscription");
-      return;
+    if (user?.id) {
+      const premiumResult = await getUserPremiumById(user.id);
+      const countResult = await getServicesCount(`vendorId=${user.id}`);
+
+      if (!premiumResult?.premium && countResult.count >= 3) {
+        toast.add({
+          title: "Limit Reached",
+          description: "Free plan allows up to 3 services. Please upgrade to Premium.",
+          type: "error",
+        });
+        router.push("/dashboard/vendor/subscription/checkout");
+        return;
+      }
     }
 
     // Validate required fields

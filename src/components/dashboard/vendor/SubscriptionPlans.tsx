@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
+import Link from "next/link";
 import {
   Check,
   Crown,
   Sparkles,
   ShieldCheck,
   ArrowRight,
-  Loader2,
   CalendarCheck,
   LayoutDashboard,
   Layers,
@@ -27,24 +27,6 @@ export default function SubscriptionPlans({
   activeServiceCount = 0,
 }: SubscriptionPlansProps) {
   const isPremium = user?.subscriptionPlan?.toLowerCase() === "premium";
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Placeholder handler for Stripe Payment integration (to be implemented by user)
-  const handleUpgradeToPremium = async () => {
-    setIsLoading(true);
-    try {
-      // NOTE for User: Implement your Stripe Checkout redirect or API call here!
-      // Example:
-      // const res = await fetch("/api/payment/checkout", { method: "POST" });
-      // const data = await res.json();
-      // if (data.url) window.location.href = data.url;
-      console.log("Upgrade to Premium clicked - ready for Stripe Checkout");
-    } catch (error) {
-      console.error("Payment initiation error:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const freeFeatures = [
     {
@@ -247,24 +229,13 @@ export default function SubscriptionPlans({
                 <span>Lifetime Access Active</span>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={handleUpgradeToPremium}
-                disabled={isLoading}
-                className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#844353] py-2 px-4 text-xs font-semibold text-white shadow-2xs hover:bg-[#6e3745] transition-all cursor-pointer disabled:opacity-50"
+              <Link
+                href="/dashboard/vendor/subscription/checkout"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#844353] py-2 px-4 text-xs font-semibold text-white shadow-2xs hover:bg-[#6e3745] transition-all cursor-pointer"
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Upgrade to Premium ($49)</span>
-                    <ArrowRight className="h-3 w-3" />
-                  </>
-                )}
-              </button>
+                <span>Upgrade to Premium ($49)</span>
+                <ArrowRight className="h-3 w-3" />
+              </Link>
             )}
           </div>
         </div>
