@@ -17,6 +17,7 @@ import {
   User,
   Mail,
   Building2,
+  AlertTriangle,
 } from "lucide-react";
 import VendorPlanBanner from "./VendorPlanBanner";
 import { Input } from "@/components/ui/input";
@@ -62,7 +63,7 @@ export default function AddServiceForm({
   user,
   vendorId = "",
   subscriptionPlan = "free",
-  activeServiceCount = 2,
+  activeServiceCount = 0,
 }: AddServiceFormProps) {
   const router = useRouter();
 
@@ -243,6 +244,23 @@ export default function AddServiceForm({
         activeCount={activeServiceCount}
         isPremium={isPremium}
       />
+
+      {isLimitReached && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-amber-50 p-4 border border-amber-200 text-xs text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
+            <span>
+              You have used all <strong>3 of 3</strong> services allowed on the Free Plan. Please upgrade to Premium to publish more services.
+            </span>
+          </div>
+          <Link
+            href="/dashboard/vendor/subscription"
+            className="rounded-lg bg-[#844353] hover:bg-[#6e3745] text-white px-3 py-1.5 font-semibold text-center shrink-0 transition"
+          >
+            Upgrade to Premium
+          </Link>
+        </div>
+      )}
 
       {/* 3. Main Form Card */}
       <div className="rounded-2xl border border-stone-200 bg-white p-6 sm:p-8 space-y-6 shadow-xs">
@@ -724,11 +742,17 @@ export default function AddServiceForm({
             disabled={isSubmitting || isLimitReached}
             className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white ${
               isLimitReached
-                ? "bg-stone-400"
-                : "bg-[#844353] hover:bg-[#6e3745]"
+                ? "bg-stone-400 cursor-not-allowed"
+                : "bg-[#844353] hover:bg-[#6e3745] cursor-pointer"
             }`}
           >
-            <span>{isSubmitting ? "Submitting..." : "Submit for Review"}</span>
+            <span>
+              {isLimitReached
+                ? "Slot Limit Reached (3/3)"
+                : isSubmitting
+                ? "Submitting..."
+                : "Submit for Review"}
+            </span>
             <ArrowRight className="h-3 w-3" />
           </button>
         </div>

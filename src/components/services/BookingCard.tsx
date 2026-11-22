@@ -73,6 +73,8 @@ export default function BookingCard({
       const booking = {
         serviceId: (service._id || service.id) as string,
         serviceName: service.serviceName,
+        servicePrice: service.price,
+        serviceCategory: service.category,
         serviceImage: service.images?.[0] || "",
         vendorId: service.vendorId,
         vendorEmail: service.vendorEmail,

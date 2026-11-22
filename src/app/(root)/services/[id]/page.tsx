@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getServiceById } from "@/lib/api/services";
-import { getCustomerBookings } from "@/lib/actions/bookings";
+import { getBookings } from "@/lib/actions/bookings";
 import { auth } from "@/lib/auth";
 import { IDashboardUser } from "@/types";
 import ServiceGallery from "@/components/services/ServiceGallery";
@@ -35,10 +35,10 @@ export default async function ServiceDetailsPage({ params }: Props) {
 
   let isAlreadyBooked = false;
   if (session?.user?.email) {
-    const userBookings = await getCustomerBookings(session.user.email, id);
+    const userBookings = await getBookings(`email=${encodeURIComponent(session.user.email)}`);
     if (Array.isArray(userBookings)) {
       isAlreadyBooked = userBookings.some(
-        (b) => b.status === "Pending" || b.status === "Accepted"
+        (b) => b.serviceId === id && (b.status === "Pending" || b.status === "Accepted")
       );
     }
   }

@@ -2,6 +2,7 @@ import React from "react";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import AddServiceForm from "@/components/dashboard/vendor/AddServiceForm";
+import { getMyServices } from "@/lib/api/services";
 import { IDashboardUser } from "@/types";
 
 export const metadata = {
@@ -14,6 +15,7 @@ export default async function AddServicePage() {
     headers: await headers()
   });
   const user = session?.user as IDashboardUser;
+  const services = await getMyServices(user?.id);
 
   return (
     <div className="w-full">
@@ -21,6 +23,7 @@ export default async function AddServicePage() {
         user={user}
         vendorId={user?.id}
         subscriptionPlan={user?.subscriptionPlan || "free"}
+        activeServiceCount={services.length}
       />
     </div>
   );
