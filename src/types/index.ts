@@ -63,3 +63,22 @@ export interface IVendorService extends ServiceFormData {
   businessName?: string;
 }
 
+// BOOKING TYPES
+export interface IBookingPayload {
+  _id?: string;
+  serviceId: string;
+  serviceName?: string;
+  servicePrice?: number | string;
+  serviceImage?: string;
+  serviceCategory?: string;
+  vendorId?: string;
+  vendorEmail?: string;
+  customerId?: string;
+  customerName?: string | null;
+  customerEmail?: string | null;
+  eventDate: string;
+  eventLocation: string;
+  message?: string;
+  status?: string;
+  createdAt?: string | Date;
+}

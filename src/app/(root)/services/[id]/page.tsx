@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { getServiceById } from "@/lib/api/services";
+import { getCustomerBookings } from "@/lib/actions/bookings";
 import { auth } from "@/lib/auth";
 import { IDashboardUser } from "@/types";
 import ServiceGallery from "@/components/services/ServiceGallery";
@@ -31,6 +32,16 @@ export default async function ServiceDetailsPage({ params }: Props) {
   }
     
   const service = await getServiceById(id);
+
+  let isAlreadyBooked = false;
+  if (session?.user?.email) {
+    const userBookings = await getCustomerBookings(session.user.email, id);
+    if (Array.isArray(userBookings)) {
+      isAlreadyBooked = userBookings.some(
+        (b) => b.status === "Pending" || b.status === "Accepted"
+      );
+    }
+  }
 
   if (!service) {
     return (
@@ -114,7 +125,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
                 </span>
               </div>
 
-              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight break-words">
+              <h1 className="font-serif text-3xl sm:text-4xl font-bold text-stone-900 leading-tight wrap-break-word">
                 {service.serviceName}
               </h1>
 
@@ -210,7 +221,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
                         {vendorEmail && (
                           <>
                             <span>•</span>
-                            <span className="inline-flex items-center gap-1 truncate max-w-[200px] sm:max-w-none">
+                            <span className="inline-flex items-center gap-1 truncate max-w-50 sm:max-w-none">
                               <Mail className="h-3.5 w-3.5 text-stone-400 shrink-0" />
                               <span className="truncate">{vendorEmail}</span>
                             </span>
@@ -233,6 +244,7 @@ export default async function ServiceDetailsPage({ params }: Props) {
             <BookingCard
               service={service}
               currentUser={session.user as IDashboardUser}
+              isAlreadyBooked={isAlreadyBooked}
             />
           </div>
         </div>

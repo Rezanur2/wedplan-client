@@ -10,23 +10,35 @@ import {
   Send,
   Store,
   ShieldAlert,
+  CalendarCheck,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/toast";
 import { IVendorService, IDashboardUser } from "@/types";
+import { bookingToAService } from "@/lib/actions/bookings";
+import { useRouter } from "next/navigation";
 
-interface BookingCardProps {
+export interface BookingCardProps {
   service: IVendorService;
   currentUser?: IDashboardUser | null;
+  isAlreadyBooked?: boolean;
 }
 
-export default function BookingCard({ service, currentUser }: BookingCardProps) {
+export default function BookingCard({
+  service,
+  currentUser,
+  isAlreadyBooked = false,
+}: BookingCardProps) {
   const [eventDate, setEventDate] = useState("");
   const [eventLocation, setEventLocation] = useState("");
   const [message, setMessage] = useState("");
-
+  const [errorMsg, setErrorMsg] = useState("");
+  const [isBooked, setIsBooked] = useState(isAlreadyBooked);
+  const router = useRouter();
   const priceNumber = Number(service.price) || 0;
+  const today = new Date().toISOString().split("T")[0];
 
   // Check if current user is the owner of this service
   const isOwnService = Boolean(
@@ -39,25 +51,60 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
       currentUser.email.toLowerCase() === service.vendorEmail.toLowerCase()
   );
 
-  // Check if current user is an admin
+  // Check if current user is an admin or vendor
   const isAdmin = currentUser?.role?.toLowerCase() === "admin";
+  const isVendor = currentUser?.role?.toLowerCase() === "vendor";
 
   // Check if service is approved and active
   const serviceStatus = (service.status || "Pending").toLowerCase();
   const isServiceAvailable =
     serviceStatus === "active" || serviceStatus === "approved";
 
-  const handleBookingSubmit = (e: React.FormEvent) => {
+  const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submitting booking request:", {
-      serviceId: service._id || service.id,
-      vendorId: service.vendorId,
-      customerId: currentUser?.id,
-      customerEmail: currentUser?.email,
-      eventDate,
-      eventLocation,
-      message,
-    });
+    setErrorMsg("");
+
+    if (!currentUser) {
+      router.push(`/signin?redirectTo=/services/${service._id || service.id}`);
+      return;
+    }
+
+    if (currentUser?.role?.toLowerCase() === "customer") {
+      const booking = {
+        serviceId: (service._id || service.id) as string,
+        serviceName: service.serviceName,
+        serviceImage: service.images?.[0] || "",
+        vendorId: service.vendorId,
+        vendorEmail: service.vendorEmail,
+        customerId: currentUser?.id,
+        customerName: currentUser?.name || "Customer",
+        customerEmail: currentUser?.email,
+        eventDate,
+        eventLocation,
+        message,
+        status: "Pending",
+      };
+
+      const result = await bookingToAService(booking);
+
+      if (result?.insertedId) {
+        setIsBooked(true);
+        toast.add({
+          title: "Booking Requested!",
+          description: "Your booking request was submitted successfully.",
+          type: "success",
+        });
+        router.push("/dashboard/customer/my-bookings");
+      } else {
+        const error = result?.message || "Failed to submit booking";
+        setErrorMsg(error);
+        toast.add({
+          title: "Booking Failed",
+          description: error,
+          type: "error",
+        });
+      }
+    }
   };
 
   return (
@@ -71,13 +118,15 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
           </div>
           <div>
             <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#844353] border border-rose-200">
-              Your Listing
+              Your Listing {!isServiceAvailable && "· Pending Review"}
             </span>
             <h3 className="mt-2 font-serif text-lg font-bold text-stone-900">
-              Own Service Restriction
+              {!isServiceAvailable ? "Listing Under Review" : "Own Service Restriction"}
             </h3>
             <p className="mt-1.5 text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
-              Vendors cannot submit booking requests for their own wedding services. You can manage or update this listing from your dashboard.
+              {!isServiceAvailable
+                ? "This service is pending admin approval and not yet open for public bookings."
+                : "Vendors cannot submit booking requests for their own wedding services."}
             </p>
           </div>
           <Link
@@ -111,6 +160,24 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
             <span>Go to Admin Dashboard</span>
           </Link>
         </div>
+      ) : isVendor ? (
+        /*  Vendor cannot submit customer booking requests */
+        <div className="py-4 text-center space-y-3">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 border border-amber-200">
+            <Store className="h-7 w-7" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800 border border-amber-200">
+              Vendor Account
+            </span>
+            <h3 className="mt-2 font-serif text-lg font-bold text-stone-900">
+              Customer Booking Only
+            </h3>
+            <p className="mt-1.5 text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
+              You are logged in with a Vendor account. Wedding services can only be booked by Customer accounts.
+            </p>
+          </div>
+        </div>
       ) : !isServiceAvailable ? (
         /*  Service is not yet approved/active */
         <div className="py-4 text-center space-y-4">
@@ -133,6 +200,30 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-stone-300 bg-white hover:bg-stone-50 text-stone-700 py-2.5 text-xs font-semibold transition-colors"
           >
             <span>Browse Active Services</span>
+          </Link>
+        </div>
+      ) : isBooked ? (
+        /*  Customer already has an active booking for this service */
+        <div className="py-4 text-center space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-[#844353] border border-rose-100">
+            <CalendarCheck className="h-7 w-7" />
+          </div>
+          <div>
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#844353] border border-rose-200">
+              Already Booked
+            </span>
+            <h3 className="mt-2 font-serif text-lg font-bold text-stone-900">
+              You&apos;ve Requested This Service
+            </h3>
+            <p className="mt-1.5 text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
+              You already have an active booking request for this service. You can track status, view booking details, or manage your request from your dashboard.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/customer/my-bookings"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#844353] hover:bg-[#6e3745] text-white py-2.5 text-xs font-semibold shadow-xs transition-colors"
+          >
+            <span>View Details in My Bookings</span>
           </Link>
         </div>
       ) : (
@@ -161,6 +252,7 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
                   id="eventDate"
                   name="eventDate"
                   type="date"
+                  min={today}
                   required
                   value={eventDate}
                   onChange={(e) => setEventDate(e.target.value)}
@@ -225,6 +317,13 @@ export default function BookingCard({ service, currentUser }: BookingCardProps) 
                 <span>${priceNumber.toLocaleString()}</span>
               </div>
             </div>
+
+            {/* Error Message */}
+            {errorMsg && (
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-700 font-medium">
+                {errorMsg}
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

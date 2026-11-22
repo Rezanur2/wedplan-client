@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   ExternalLink,
-  Pencil,
   Clock,
   Lock,
   Info,
@@ -11,7 +10,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { IVendorService } from "@/types";
-import { Button } from "@/components/ui/button";
 import { DeleteServiceDialog } from "./DeleteServiceDialog";
 import { EditServiceDialog } from "./EditServiceDialog";
 
@@ -29,9 +27,9 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     service.status === "Pending" || service.status === "Under Review";
 
   const displayImage =
-    service.images && service.images.length > 0
+    service.images && service.images.length > 0 && service.images[0]
       ? service.images[0]
-      : "No Image";
+      : "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800";
 
   return (
     <div className="flex flex-col justify-between overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xs transition hover:shadow-md">
@@ -69,19 +67,20 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           </div>
 
           {/* Right badge / action */}
-          {isPending ? (
-            <span className="hidden sm:inline-flex items-center rounded-full bg-stone-900/80 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-stone-200 whitespace-nowrap shrink-0">
-              Under Review
-            </span>
-          ) : (
+          <div className="flex items-center gap-1.5">
+            {isPending && (
+              <span className="hidden sm:inline-flex items-center rounded-full bg-stone-900/80 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-stone-200 whitespace-nowrap shrink-0">
+                Under Review
+              </span>
+            )}
             <Link
               href={`/services/${service._id || service.id}`}
-              title="View Service Details"
+              title={isPending ? "Preview Service Listing" : "View Service Details"}
               className="rounded-lg bg-black/40 backdrop-blur-xs p-1.5 text-white transition hover:bg-black/60 cursor-pointer shrink-0 inline-flex items-center justify-center"
             >
               <ExternalLink className="h-3.5 w-3.5" />
             </Link>
-          )}
+          </div>
         </div>
 
         {/* Bottom Details Over Image */}
