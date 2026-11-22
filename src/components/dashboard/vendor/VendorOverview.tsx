@@ -14,6 +14,7 @@ import {
   Inbox,
   Calendar,
   User,
+  Eye,
 } from "lucide-react";
 import { IDashboardUser, IBookingPayload, ServiceFormData } from "@/types";
 import VendorPlanBanner from "./VendorPlanBanner";
@@ -89,7 +90,7 @@ export default function VendorOverview({
   ];
 
   return (
-    <div className="max-w-5xl space-y-6 pb-12">
+    <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* 1. Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -190,43 +191,157 @@ export default function VendorOverview({
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-stone-100">
-            {recentBookings.map((b) => (
-              <div
-                key={b._id || b.serviceId}
-                className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
-              >
-                <div className="space-y-0.5">
-                  <p className="font-semibold text-stone-900">
-                    {b.serviceName || "Wedding Service"}
-                  </p>
-                  <div className="flex items-center gap-3 text-[11px] text-stone-500">
-                    <span className="flex items-center gap-1">
-                      <User className="h-3 w-3 text-stone-400" />
-                      {b.customerName || b.customerEmail || "Client"}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3 text-stone-400" />
-                      {b.eventDate || "Date TBD"}
+          <div>
+            {/* Desktop & Tablet: Elegant Table Layout */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-stone-100 text-[11px] font-semibold uppercase tracking-wider text-stone-400">
+                    <th className="pb-3 font-medium">Service</th>
+                    <th className="pb-3 font-medium">Customer</th>
+                    <th className="pb-3 font-medium">Event Date</th>
+                    <th className="pb-3 font-medium">Status</th>
+                    <th className="pb-3 text-right font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {recentBookings.map((b) => (
+                    <tr
+                      key={b._id || b.serviceId}
+                      className="group transition-colors hover:bg-stone-50/70"
+                    >
+                      <td className="py-3.5 pr-4">
+                        <div className="font-semibold text-stone-900 group-hover:text-[#844353] transition-colors">
+                          {b.serviceName || "Wedding Service"}
+                        </div>
+                        {b.serviceCategory && (
+                          <span className="text-[10px] text-stone-400">
+                            {b.serviceCategory}
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 pr-4">
+                        <div className="flex items-center gap-1.5 font-medium text-stone-800">
+                          <User className="h-3.5 w-3.5 text-stone-400" />
+                          <span>{b.customerName || "Customer"}</span>
+                        </div>
+                        {b.customerEmail && (
+                          <div className="text-[11px] text-stone-400">
+                            {b.customerEmail}
+                          </div>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 pr-4">
+                        <div className="inline-flex items-center gap-1.5 rounded-md bg-stone-100/80 px-2 py-0.5 text-[11px] font-medium text-stone-700">
+                          <Calendar className="h-3 w-3 text-[#844353]" />
+                          <span>{b.eventDate || "Date TBD"}</span>
+                        </div>
+                      </td>
+
+                      <td className="py-3.5 pr-4">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${
+                            b.status === "Accepted"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : b.status === "Rejected"
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}
+                        >
+                          <span
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              b.status === "Accepted"
+                                ? "bg-emerald-500"
+                                : b.status === "Rejected"
+                                ? "bg-rose-500"
+                                : "bg-amber-500"
+                            }`}
+                          />
+                          {b.status || "Pending"}
+                        </span>
+                      </td>
+
+                      <td className="py-3.5 text-right">
+                        <Link
+                          href="/dashboard/vendor/booking-requests"
+                          className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1 text-xs font-medium text-stone-700 shadow-2xs hover:bg-[#844353] hover:text-white hover:border-[#844353] transition-all"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          <span>View</span>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile: Styled Cards Layout */}
+            <div className="block sm:hidden space-y-3">
+              {recentBookings.map((b) => (
+                <div
+                  key={b._id || b.serviceId}
+                  className="rounded-xl border border-stone-200/80 bg-stone-50/50 p-3 space-y-2.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-semibold text-stone-900 text-xs">
+                        {b.serviceName || "Wedding Service"}
+                      </div>
+                      {b.serviceCategory && (
+                        <span className="text-[10px] text-stone-400">
+                          {b.serviceCategory}
+                        </span>
+                      )}
+                    </div>
+
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border shrink-0 ${
+                        b.status === "Accepted"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : b.status === "Rejected"
+                          ? "bg-rose-50 text-rose-700 border-rose-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          b.status === "Accepted"
+                            ? "bg-emerald-500"
+                            : b.status === "Rejected"
+                            ? "bg-rose-500"
+                            : "bg-amber-500"
+                        }`}
+                      />
+                      {b.status || "Pending"}
                     </span>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${
-                      b.status === "Accepted"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : b.status === "Rejected"
-                        ? "bg-rose-50 text-rose-700 border-rose-200"
-                        : "bg-amber-50 text-amber-700 border-amber-200"
-                    }`}
-                  >
-                    {b.status || "Pending"}
-                  </span>
+                  <div className="flex items-center justify-between text-[11px] text-stone-500 pt-1 border-t border-stone-100">
+                    <div className="flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <User className="h-3 w-3 text-stone-400" />
+                        {b.customerName || "Customer"}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3 text-stone-400" />
+                        {b.eventDate || "TBD"}
+                      </span>
+                    </div>
+
+                    <Link
+                      href="/dashboard/vendor/booking-requests"
+                      className="inline-flex items-center gap-1 rounded-lg border border-stone-200 bg-white px-2 py-0.5 text-[11px] font-medium text-stone-700 shadow-2xs hover:bg-[#844353] hover:text-white hover:border-[#844353] transition-all"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>View</span>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </div>

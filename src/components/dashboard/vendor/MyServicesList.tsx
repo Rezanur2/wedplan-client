@@ -7,18 +7,20 @@ import {
   BarChart3,
   ShieldCheck,
 } from "lucide-react";
-import { IVendorService, TFilterTab } from "@/types";
+import { IBookingPayload, IVendorService, TFilterTab } from "@/types";
 import ServiceCard from "./ServiceCard";
 import EmptySlotCard from "./EmptySlotCard";
 import VendorPlanBanner from "./VendorPlanBanner";
 
 interface MyServicesListProps {
   services?: IVendorService[];
+  bookings?: IBookingPayload[];
   isPremium?: boolean;
 }
 
 export default function MyServicesList({
   services = [],
+  bookings = [],
   isPremium = false,
 }: MyServicesListProps) {
   const [activeTab, setActiveTab] = useState<TFilterTab>("all");
@@ -136,12 +138,20 @@ export default function MyServicesList({
 
       {/* 4. Responsive Grid of Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        {filteredServices.map((service) => (
-          <ServiceCard
-            key={service.id || service._id || service.serviceName}
-            service={service}
-          />
-        ))}
+        {filteredServices.map((service) => {
+          const serviceId = service._id || service.id;
+          const bookingCount = bookings.filter(
+            (b) => b.serviceId === serviceId
+          ).length;
+
+          return (
+            <ServiceCard
+              key={service.id || service._id || service.serviceName}
+              service={service}
+              bookingCount={bookingCount}
+            />
+          );
+        })}
 
         {/* Show Empty Slot Card when on All tab and under 3 services for free plan */}
         {activeTab === "all" && !isPremium && services.length < 3 && (

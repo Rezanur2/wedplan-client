@@ -25,6 +25,8 @@ export interface IDashboardUser {
 
 export interface DashboardSidebarProps {
   user?: IDashboardUser | null;
+  pendingCount?: number;
+  isPremium?: boolean;
 }
 
 //SERVICE TYPES

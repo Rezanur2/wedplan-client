@@ -126,7 +126,7 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
   };
 
   return (
-    <div className="max-w-5xl space-y-6 pb-12">
+    <div className="mx-auto max-w-5xl space-y-6 pb-12">
       {/* 1. Header (Title and Badge side-by-side) */}
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900">

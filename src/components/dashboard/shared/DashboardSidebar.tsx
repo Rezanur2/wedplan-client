@@ -83,16 +83,12 @@ const menuItemsByRole: Record<TUserRole, IMenuItem[]> = {
       name: "Booking Requests",
       url: "/dashboard/vendor/booking-requests",
       icon: CalendarDays,
-      badge: "3 pending",
-      badgeVariant: "pink",
     },
     {
       id: "vendor-subscription",
       name: "Subscription",
       url: "/dashboard/vendor/subscription",
       icon: Tag,
-      badge: "Free Tier",
-      badgeVariant: "gray",
     },
     {
       id: "vendor-profile",
@@ -131,7 +127,11 @@ const menuItemsByRole: Record<TUserRole, IMenuItem[]> = {
 
 
 
-export function DashboardSidebar({ user }: DashboardSidebarProps = {}) {
+export function DashboardSidebar({
+  user,
+  pendingCount = 0,
+  isPremium: isPremiumProp,
+}: DashboardSidebarProps = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { setOpenMobile } = useSidebar();
@@ -142,8 +142,30 @@ export function DashboardSidebar({ user }: DashboardSidebarProps = {}) {
     pathname.startsWith("/dashboard/admin") ? "admin" : "customer"
   );
 
-  // 2. Menu Items based on role
-  const sidebarItems = menuItemsByRole[role] || menuItemsByRole.customer;
+  const isPremium = isPremiumProp !== undefined
+    ? isPremiumProp
+    : (user?.subscriptionPlan || "free").toLowerCase() === "premium";
+
+  // 2. Menu Items based on role (dynamic badges)
+  const rawItems = menuItemsByRole[role] || menuItemsByRole.customer;
+
+  const sidebarItems = rawItems.map((item) => {
+    if (item.id === "vendor-bookings") {
+      return {
+        ...item,
+        badge: pendingCount > 0 ? `${pendingCount} pending` : undefined,
+        badgeVariant: "pink" as const,
+      };
+    }
+    if (item.id === "vendor-subscription") {
+      return {
+        ...item,
+        badge: isPremium ? "Premium" : "Free Tier",
+        badgeVariant: isPremium ? ("pink" as const) : ("gray" as const),
+      };
+    }
+    return item;
+  });
 
   // 3. Active Path Check
   const isActivePath = (href: string) => {
@@ -153,8 +175,6 @@ export function DashboardSidebar({ user }: DashboardSidebarProps = {}) {
       ? pathname === href
       : pathname === href || pathname.startsWith(`${href}/`);
   };
-
-  const isPremium = (user?.subscriptionPlan || "free").toLowerCase() === "premium";
   const userInitial = user?.name?.charAt(0).toUpperCase() || "U";
   const hasValidImage = Boolean(user?.image && typeof user.image === "string" && user.image.trim() !== "");
   const displayName =

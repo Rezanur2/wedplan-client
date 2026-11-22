@@ -8,6 +8,7 @@ import {
   Info,
   Users,
   Sparkles,
+  Calendar,
 } from "lucide-react";
 import { IVendorService } from "@/types";
 import { DeleteServiceDialog } from "./DeleteServiceDialog";
@@ -15,9 +16,10 @@ import { EditServiceDialog } from "./EditServiceDialog";
 
 export interface ServiceCardProps {
   service: IVendorService;
+  bookingCount?: number;
 }
 
-export default function ServiceCard({ service }: ServiceCardProps) {
+export default function ServiceCard({ service, bookingCount }: ServiceCardProps) {
   // Toggle availability state
   const [isAvailable, setIsAvailable] = useState<boolean>(
     service.isAvailable ?? true,
@@ -151,6 +153,19 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             ))}
           </div>
         )}
+        {/* Booking Requests / Inquiries Count Link */}
+        <div className="mt-3 flex items-center justify-between pt-1 border-t border-stone-100">
+          <Link
+            href={`/dashboard/vendor/booking-requests?serviceId=${service._id || service.id}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-[#844353]/10 hover:border-[#844353]/30 hover:text-[#844353] transition"
+            title="View booking requests for this service"
+          >
+            <Calendar className="h-3.5 w-3.5 text-[#844353]" />
+            <span>
+              {bookingCount !== undefined ? `${bookingCount} Booking Requests` : "View Requests"}
+            </span>
+          </Link>
+        </div>
       </div>
 
       {/* 3. Card Footer: Availability Switch & Actions */}
