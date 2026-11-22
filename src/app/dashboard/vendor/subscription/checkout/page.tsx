@@ -1,7 +1,6 @@
 import React from "react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/core/server";
 import { getUserPremiumById } from "@/lib/api/user";
 import { IDashboardUser } from "@/types";
 import VendorCheckoutView from "@/components/dashboard/vendor/VendorCheckoutView";
@@ -12,9 +11,7 @@ export const metadata = {
 };
 
 export default async function VendorCheckoutPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/signin?redirectTo=/dashboard/vendor/subscription/checkout");

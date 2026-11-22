@@ -1,7 +1,6 @@
 import React from "react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/core/server";
 import MyBookingsList from "@/components/dashboard/customer/MyBookingsList";
 import { getBookings } from "@/lib/actions/bookings";
 
@@ -13,9 +12,7 @@ export const metadata = {
 };
 
 export default async function MyBookingsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session) {
     redirect("/signin?redirectTo=/dashboard/customer/my-bookings");

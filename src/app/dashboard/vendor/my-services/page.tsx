@@ -1,8 +1,8 @@
 import React from "react";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
 import MyServicesList from "@/components/dashboard/vendor/MyServicesList";
 import { getMyServices } from "@/lib/api/services";
+import { getUserPremiumById } from "@/lib/api/user";
+import { getSession } from "@/lib/core/server";
 
 export const metadata = {
   title: "My Services | Vendor Dashboard | WedPlan",
@@ -10,8 +10,14 @@ export const metadata = {
 };
 
 export default async function MyServicesPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const services = await getMyServices(session?.user?.id);
+  const session = await getSession();
+  const userId = session?.user?.id || "";
 
-  return <MyServicesList services={services} />;
+  const services = await getMyServices(userId);
+  const premiumData = await getUserPremiumById(userId);
+  const isPremium = Boolean(
+    premiumData?.premium || session?.user?.subscriptionPlan?.toLowerCase() === "premium"
+  );
+
+  return <MyServicesList services={services} isPremium={isPremium} />;
 }

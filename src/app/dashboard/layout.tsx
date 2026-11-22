@@ -1,9 +1,9 @@
 import React from "react";
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/core/server";
 import { IDashboardUser } from "@/types";
 import { DashboardSidebar } from "@/components/dashboard/shared/DashboardSidebar";
 import { DashboardTopbar } from "@/components/dashboard/shared/DashboardTopbar";
@@ -13,10 +13,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [cookieStore, session] = await Promise.all([
-    cookies(),
-    auth.api.getSession({ headers: await headers() }),
-  ]);
+  const cookieStore = await cookies();
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/signin");

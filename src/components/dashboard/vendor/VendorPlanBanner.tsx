@@ -11,6 +11,9 @@ export default function VendorPlanBanner({
   activeCount = 0,
   isPremium = false,
 }: VendorPlanBannerProps) {
+  // Hide banner completely for premium vendors
+  if (isPremium) return null;
+
   const maxLimit = 3;
   const remaining = Math.max(0, maxLimit - activeCount);
   const progressPercent = Math.min(100, (activeCount / maxLimit) * 100);

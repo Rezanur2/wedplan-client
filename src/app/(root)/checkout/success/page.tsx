@@ -143,7 +143,7 @@ export default async function CheckoutSuccessPage({
                 </span>
               </div>
 
-              {/* Transaction ID from payment_intent.id (PR Requirement) */}
+              {/* Transaction ID */}
               <div className="border-t border-stone-200/60 pt-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-[11px]">
                 <span className="text-stone-700 font-semibold flex items-center gap-1">
                   Transaction ID

@@ -1,13 +1,10 @@
 import React from "react";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/core/server";
 import ProfileSettingsForm from "@/components/dashboard/shared/ProfileSettingsForm";
 
 export default async function CustomerProfilePage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  const session = await getSession();
 
   if (!session?.user) {
     redirect("/signin?redirectTo=/dashboard/customer/profile");

@@ -14,10 +14,12 @@ import VendorPlanBanner from "./VendorPlanBanner";
 
 interface MyServicesListProps {
   services?: IVendorService[];
+  isPremium?: boolean;
 }
 
 export default function MyServicesList({
   services = [],
+  isPremium = false,
 }: MyServicesListProps) {
   const [activeTab, setActiveTab] = useState<TFilterTab>("all");
 
@@ -73,7 +75,7 @@ export default function MyServicesList({
       </div>
 
       {/* 2. Plan Banner */}
-      <VendorPlanBanner activeCount={services.length} />
+      <VendorPlanBanner activeCount={services.length} isPremium={isPremium} />
 
       {/* 3. Filter Tabs & Accreditation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
@@ -133,7 +135,7 @@ export default function MyServicesList({
       </div>
 
       {/* 4. Responsive Grid of Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         {filteredServices.map((service) => (
           <ServiceCard
             key={service.id || service._id || service.serviceName}
@@ -141,8 +143,8 @@ export default function MyServicesList({
           />
         ))}
 
-        {/* Show Empty Slot Card when on All tab and under 3 services */}
-        {activeTab === "all" && services.length < 3 && (
+        {/* Show Empty Slot Card when on All tab and under 3 services for free plan */}
+        {activeTab === "all" && !isPremium && services.length < 3 && (
           <EmptySlotCard remainingSlots={Math.max(1, 3 - services.length)} />
         )}
       </div>

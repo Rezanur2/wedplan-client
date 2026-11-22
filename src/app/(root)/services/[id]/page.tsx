@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   MapPin,
@@ -14,7 +13,7 @@ import {
 } from "lucide-react";
 import { getServiceById } from "@/lib/api/services";
 import { getBookings } from "@/lib/actions/bookings";
-import { auth } from "@/lib/auth";
+import { getSession } from "@/lib/core/server";
 import { IDashboardUser } from "@/types";
 import ServiceGallery from "@/components/services/ServiceGallery";
 import BookingCard from "@/components/services/BookingCard";
@@ -26,7 +25,7 @@ interface Props {
 export default async function ServiceDetailsPage({ params }: Props) {
   const { id } = await params;
 
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getSession();
   if (!session?.user) {
     redirect(`/signin?redirectTo=/services/${id}`);
   }
