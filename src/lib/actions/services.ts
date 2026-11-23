@@ -1,34 +1,25 @@
+'use server'
 import { ServiceFormData } from "@/types";
+import { protectedMutation } from "../core/server";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
 
 export const createService = async (data: ServiceFormData) => {
-    const res = await fetch(`${BASE_URL}/services`, {
-        method: "POST",
-        headers: {
-            'content-type':'application/json',
-        },
-        body: JSON.stringify(data),
-    })
-    return res.json();
+    const api = `${BASE_URL}/services`;
+    const response = await protectedMutation(api, "POST", data)
+    return response.json();
 }
 
 export const deleteService = async (serviceId: string) => {
-    const res = await fetch(`${BASE_URL}/services/${serviceId}`, {
-        method: "DELETE"
-    })
-    return res.json();
+    const api = `${BASE_URL}/services/${serviceId}`;
+    const response = await protectedMutation(api, "DELETE");
+    return response.json();
 }
 
 export const updateService = async (serviceId: string, data: Partial<ServiceFormData>) => {
-    const res = await fetch(`${BASE_URL}/services/${serviceId}`, {
-        method: "PATCH",
-        headers: {
-            'content-type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    });
-    return res.json();
+    const api = `${BASE_URL}/services/${serviceId}`;
+    const response = await protectedMutation(api, "PATCH", data)
+    return response.json();
 }
 
 export const getServicesCount = async (query = ""): Promise<{ count: number }> => {
