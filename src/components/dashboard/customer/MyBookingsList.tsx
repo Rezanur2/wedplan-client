@@ -114,7 +114,7 @@ export default function MyBookingsList({
       </div>
 
       {/* 2. Filter Tabs */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {tabs.map((tab) => {
           const count =
             tab === "all"

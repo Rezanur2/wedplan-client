@@ -82,7 +82,7 @@ export default function MyServicesList({
       {/* 3. Filter Tabs & Accreditation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
         {/* Filter Pills */}
-        <div className="inline-flex rounded-xl bg-stone-100 p-1">
+        <div className="inline-flex rounded-xl bg-stone-100 p-1 max-w-full overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab("all")}

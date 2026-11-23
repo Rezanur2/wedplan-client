@@ -13,6 +13,7 @@ export interface IMenuItem {
 
 export interface IDashboardUser {
   id?: string;
+  _id?: string;
   name?: string | null;
   email?: string | null;
   image?: string | null;
@@ -21,6 +22,7 @@ export interface IDashboardUser {
   businessName?: string | null;
   subscriptionPlan?: string | null;
   subscriptionExpiresAt?: Date | string | null;
+  createdAt?: string | Date | null;
 }
 
 export interface DashboardSidebarProps {
