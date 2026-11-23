@@ -16,16 +16,19 @@ import {
   RotateCcw,
   Crown,
 } from "lucide-react";
-import { IDashboardUser } from "@/types";
+import { IDashboardUser, TUserRole } from "@/types";
 import { toast } from "@/components/ui/toast";
 import UserDetailsModal from "./UserDetailsModal";
+import { updateUserRole } from "@/lib/actions/users";
 
 interface ManageUsersProps {
-  initialUsers?: IDashboardUser[];
+  users?: IDashboardUser[];
 }
 
-export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
-  const [users] = useState<IDashboardUser[]>(initialUsers);
+export default function ManageUsers({ users = [] }: ManageUsersProps) {
+  const [roles, setRoles] = useState<Record<string, TUserRole>>(() =>
+    Object.fromEntries(users.map((user) => [user._id || user.id || "", (user.role || "customer") as TUserRole]))
+  );
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -71,12 +74,18 @@ export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
   });
 
   // Handlers for user to connect backend logic later
-  const handleRoleChange = (user: IDashboardUser, newRole: "customer" | "vendor" | "admin") => {
-    toast.add({
-      title: "Role Change Event",
-      description: `Assigned ${user.name || "user"} as ${newRole}. (Ready for logic)`,
-      type: "info",
-    });
+  const handleRoleChange = async (user: IDashboardUser, role: TUserRole) => {
+    const userId = user._id || user.id || "";
+    setRoles((prev) => ({ ...prev, [userId]: role }));
+    const res = await updateUserRole(userId, role);
+
+    if (res?.modifiedCount > 0) {
+      toast.add({
+        title: "Role Change Event",
+        description: `Assigned ${user.name || "user"} as ${role}.`,
+        type: "info",
+      });
+    }
   };
 
   const handleToggleBlock = (user: IDashboardUser) => {
@@ -89,8 +98,8 @@ export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
   };
 
   // Reusable UI helpers for role badge, status badge, and action buttons
-  const getRoleBadge = (roleName: string) => {
-    const role = (roleName || "customer").toLowerCase();
+  const getRoleBadge = (user: IDashboardUser) => {
+    const role = (roles[user._id || user.id || ""] || user.role || "customer").toLowerCase();
     const badgeColor =
       role === "admin"
         ? "bg-purple-50 text-purple-700 border-purple-200"
@@ -119,8 +128,10 @@ export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
     </span>
   );
 
+  // Role Render Button 
   const renderRoleButtons = (user: IDashboardUser) => {
-    const role = (user.role || "customer").toLowerCase();
+    const currentRole = roles[user._id || user.id || ""] || user.role || "customer";
+    const role = currentRole.toLowerCase();
     return (
       <div className="flex items-center gap-1.5 flex-wrap">
         {role !== "admin" && (
@@ -331,8 +342,8 @@ export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Mobile User Cards (< md) */}
-          <div className="grid grid-cols-1 gap-3 md:hidden">
+          {/* Mobile User Cards (< lg) */}
+          <div className="grid grid-cols-1 gap-3 lg:hidden">
             {filteredUsers.map((user) => {
               const initials = (user.name || "U").slice(0, 2).toUpperCase();
               const joinedDate = user.createdAt
@@ -355,7 +366,7 @@ export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
                   </div>
 
                   <div className="flex items-center justify-between border-y border-stone-100 py-2 text-xs">
-                    {getRoleBadge(user.role || "")}
+                    {getRoleBadge(user)}
                     <span className="text-[11px] text-stone-400">Joined {joinedDate}</span>
                   </div>
 
@@ -405,7 +416,7 @@ export default function ManageUsers({ initialUsers = [] }: ManageUsersProps) {
                           </div>
                         </td>
                         <td className="py-3 px-3 text-stone-600 truncate max-w-45">{user.email}</td>
-                        <td className="py-3 px-3">{getRoleBadge(user.role || "")}</td>
+                        <td className="py-3 px-3">{getRoleBadge(user)}</td>
                         <td className="py-3 px-3">{getStatusBadge(Boolean(user.isBlocked))}</td>
                         <td className="py-3 px-3 text-stone-500 text-[11px] whitespace-nowrap">{joinedDate}</td>
                         <td className="py-3 px-3">{renderRoleButtons(user)}</td>

@@ -419,7 +419,7 @@ export default function VendorBookingRequests({
             <DialogTitle className="font-serif text-lg text-stone-900">
               Decline Booking Request?
             </DialogTitle>
-            <DialogDescription className="text-xs text-stone-500 leading-relaxed break-words">
+            <DialogDescription className="text-xs text-stone-500 leading-relaxed wrap-break-word">
               Are you sure you want to decline the request for{" "}
               <strong className="text-stone-800">{bookingToReject?.serviceName}</strong> on{" "}
               <strong className="text-stone-800">{bookingToReject?.eventDate}</strong> by{" "}
@@ -523,7 +523,7 @@ export default function VendorBookingRequests({
                   <div className="font-semibold text-stone-900 truncate">
                     {selectedBooking.eventDate}
                   </div>
-                  <div className="text-stone-500 break-words text-[11px]">
+                  <div className="text-stone-500 wrap-break-word text-[11px]">
                     {selectedBooking.eventLocation}
                   </div>
                 </div>
@@ -543,7 +543,7 @@ export default function VendorBookingRequests({
                   <MessageSquare className="h-3.5 w-3.5 text-stone-400" />
                   <span>Customer Message</span>
                 </div>
-                <p className="text-stone-700 leading-relaxed italic bg-stone-50 rounded-lg p-2.5 border border-stone-100 break-words text-[11px] sm:text-xs">
+                <p className="text-stone-700 leading-relaxed italic bg-stone-50 rounded-lg p-2.5 border border-stone-100 wrap-break-word text-[11px] sm:text-xs">
                   {selectedBooking.message
                     ? `“${selectedBooking.message}”`
                     : "No message was included with this booking request."}

@@ -25,5 +25,5 @@ export default async function ManageUsersPage() {
   // Fetch all registered users
   const users = await getAllUsers();
 
-  return <ManageUsers initialUsers={users} />;
+  return <ManageUsers users={users} />;
 }
