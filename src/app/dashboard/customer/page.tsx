@@ -1,16 +1,31 @@
 import React from "react";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/core/server";
+import { getBookings } from "@/lib/actions/bookings";
+import CustomerOverview from "@/components/dashboard/customer/CustomerOverview";
+import { IDashboardUser } from "@/types";
 
-const CustomerDashboardPage = () => {
-  return (
-    <div className="rounded-2xl border border-[#EFE5E9] bg-white p-6 shadow-2xs">
-      <h2 className="font-serif text-xl font-bold text-stone-900">
-        Customer Dashboard
-      </h2>
-      <p className="mt-1 text-xs text-stone-500">
-        Welcome to your customer portal. Overview and booking features will be configured here.
-      </p>
-    </div>
-  );
+export const metadata = {
+  title: "Customer Dashboard | WedPlan",
+  description: "Wedding planning overview, booking inquiries, and celebration reservations.",
 };
 
-export default CustomerDashboardPage;
+export default async function CustomerDashboardPage() {
+  const session = await getSession();
+
+  if (!session?.user) {
+    redirect("/signin?redirectTo=/dashboard/customer");
+  }
+
+  const currentUser = session.user as IDashboardUser;
+  const userBookings = await getBookings(
+    `email=${encodeURIComponent(currentUser.email || "")}`
+  );
+
+  return (
+    <CustomerOverview
+      user={currentUser}
+      bookings={userBookings || []}
+    />
+  );
+}

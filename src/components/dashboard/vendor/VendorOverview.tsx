@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Store,
   CheckCircle2,
@@ -19,6 +20,9 @@ import {
 import { IDashboardUser, IBookingPayload, ServiceFormData } from "@/types";
 import VendorPlanBanner from "./VendorPlanBanner";
 
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800";
+
 interface VendorOverviewProps {
   user?: IDashboardUser | null;
   services: ServiceFormData[];
@@ -34,17 +38,17 @@ export default function VendorOverview({
 }: VendorOverviewProps) {
   // Metric calculations
   const totalServices = services.length;
-  const activeServices = services.filter((s) => {
-    const st = (s.status || "").toLowerCase();
-    return st === "active" || st === "approved";
+  const activeServices = services.filter((serviceItem) => {
+    const status = (serviceItem.status || "").toLowerCase();
+    return status === "active" || status === "approved";
   }).length;
 
   const pendingBookings = bookings.filter(
-    (b) => (b.status || "").toLowerCase() === "pending"
+    (bookingItem) => (bookingItem.status || "").toLowerCase() === "pending"
   ).length;
 
   const acceptedBookings = bookings.filter(
-    (b) => (b.status || "").toLowerCase() === "accepted"
+    (bookingItem) => (bookingItem.status || "").toLowerCase() === "accepted"
   ).length;
 
   // Recent 3 bookings for preview
@@ -205,30 +209,51 @@ export default function VendorOverview({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-stone-100">
-                  {recentBookings.map((b) => (
+                  {recentBookings.map((bookingItem) => (
                     <tr
-                      key={b._id || b.serviceId}
+                      key={bookingItem._id || bookingItem.serviceId}
                       className="group transition-colors hover:bg-stone-50/70"
                     >
                       <td className="py-3.5 pr-4">
-                        <div className="font-semibold text-stone-900 group-hover:text-[#844353] transition-colors">
-                          {b.serviceName || "Wedding Service"}
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-stone-200/80 bg-stone-100 shadow-2xs">
+                            <Image
+                              src={bookingItem.serviceImage || FALLBACK_IMAGE}
+                              alt={bookingItem.serviceName || "Service"}
+                              fill
+                              unoptimized
+                              className="object-cover"
+                              sizes="44px"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                if (target.src !== FALLBACK_IMAGE) {
+                                  target.srcset = "";
+                                  target.src = FALLBACK_IMAGE;
+                                }
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-stone-900 group-hover:text-[#844353] transition-colors line-clamp-1">
+                              {bookingItem.serviceName || "Wedding Service"}
+                            </div>
+                            {bookingItem.serviceCategory && (
+                              <span className="text-[10px] text-stone-400">
+                                {bookingItem.serviceCategory}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        {b.serviceCategory && (
-                          <span className="text-[10px] text-stone-400">
-                            {b.serviceCategory}
-                          </span>
-                        )}
                       </td>
 
                       <td className="py-3.5 pr-4">
                         <div className="flex items-center gap-1.5 font-medium text-stone-800">
                           <User className="h-3.5 w-3.5 text-stone-400" />
-                          <span>{b.customerName || "Customer"}</span>
+                          <span>{bookingItem.customerName || "Customer"}</span>
                         </div>
-                        {b.customerEmail && (
+                        {bookingItem.customerEmail && (
                           <div className="text-[11px] text-stone-400">
-                            {b.customerEmail}
+                            {bookingItem.customerEmail}
                           </div>
                         )}
                       </td>
@@ -236,30 +261,30 @@ export default function VendorOverview({
                       <td className="py-3.5 pr-4">
                         <div className="inline-flex items-center gap-1.5 rounded-md bg-stone-100/80 px-2 py-0.5 text-[11px] font-medium text-stone-700">
                           <Calendar className="h-3 w-3 text-[#844353]" />
-                          <span>{b.eventDate || "Date TBD"}</span>
+                          <span>{bookingItem.eventDate || "Date TBD"}</span>
                         </div>
                       </td>
 
                       <td className="py-3.5 pr-4">
                         <span
                           className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border ${
-                            b.status === "Accepted"
+                            bookingItem.status === "Accepted"
                               ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : b.status === "Rejected"
+                              : bookingItem.status === "Rejected"
                               ? "bg-rose-50 text-rose-700 border-rose-200"
                               : "bg-amber-50 text-amber-700 border-amber-200"
                           }`}
                         >
                           <span
                             className={`h-1.5 w-1.5 rounded-full ${
-                              b.status === "Accepted"
+                              bookingItem.status === "Accepted"
                                 ? "bg-emerald-500"
-                                : b.status === "Rejected"
+                                : bookingItem.status === "Rejected"
                                 ? "bg-rose-500"
                                 : "bg-amber-500"
                             }`}
                           />
-                          {b.status || "Pending"}
+                          {bookingItem.status || "Pending"}
                         </span>
                       </td>
 
@@ -280,42 +305,61 @@ export default function VendorOverview({
 
             {/* Mobile: Styled Cards Layout */}
             <div className="block sm:hidden space-y-3">
-              {recentBookings.map((b) => (
+              {recentBookings.map((bookingItem) => (
                 <div
-                  key={b._id || b.serviceId}
+                  key={bookingItem._id || bookingItem.serviceId}
                   className="rounded-xl border border-stone-200/80 bg-stone-50/50 p-3 space-y-2.5"
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-semibold text-stone-900 text-xs">
-                        {b.serviceName || "Wedding Service"}
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-stone-200/80 bg-stone-100 shadow-2xs">
+                        <Image
+                          src={bookingItem.serviceImage || FALLBACK_IMAGE}
+                          alt={bookingItem.serviceName || "Service"}
+                          fill
+                          unoptimized
+                          className="object-cover"
+                          sizes="44px"
+                          onError={(e) => {
+                            const target = e.currentTarget as HTMLImageElement;
+                            if (target.src !== FALLBACK_IMAGE) {
+                              target.srcset = "";
+                              target.src = FALLBACK_IMAGE;
+                            }
+                          }}
+                        />
                       </div>
-                      {b.serviceCategory && (
-                        <span className="text-[10px] text-stone-400">
-                          {b.serviceCategory}
-                        </span>
-                      )}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-stone-900 text-xs truncate">
+                          {bookingItem.serviceName || "Wedding Service"}
+                        </div>
+                        {bookingItem.serviceCategory && (
+                          <span className="text-[10px] text-stone-400 block truncate">
+                            {bookingItem.serviceCategory}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <span
                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border shrink-0 ${
-                        b.status === "Accepted"
+                        bookingItem.status === "Accepted"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : b.status === "Rejected"
+                          : bookingItem.status === "Rejected"
                           ? "bg-rose-50 text-rose-700 border-rose-200"
                           : "bg-amber-50 text-amber-700 border-amber-200"
                       }`}
                     >
                       <span
                         className={`h-1.5 w-1.5 rounded-full ${
-                          b.status === "Accepted"
+                          bookingItem.status === "Accepted"
                             ? "bg-emerald-500"
-                            : b.status === "Rejected"
+                            : bookingItem.status === "Rejected"
                             ? "bg-rose-500"
                             : "bg-amber-500"
                         }`}
                       />
-                      {b.status || "Pending"}
+                      {bookingItem.status || "Pending"}
                     </span>
                   </div>
 
@@ -323,11 +367,11 @@ export default function VendorOverview({
                     <div className="flex items-center gap-3">
                       <span className="flex items-center gap-1">
                         <User className="h-3 w-3 text-stone-400" />
-                        {b.customerName || "Customer"}
+                        {bookingItem.customerName || "Customer"}
                       </span>
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3 text-stone-400" />
-                        {b.eventDate || "TBD"}
+                        {bookingItem.eventDate || "TBD"}
                       </span>
                     </div>
 

@@ -18,6 +18,13 @@ import {
 } from "lucide-react";
 import { IDashboardUser, TUserRole } from "@/types";
 import { toast } from "@/components/ui/toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import UserDetailsModal from "./UserDetailsModal";
 import { updateUserRole } from "@/lib/actions/users";
 
@@ -322,15 +329,36 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
             )}
           </div>
 
-          <select
+          <Select
             value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-700 shadow-2xs cursor-pointer focus:outline-none"
+            onValueChange={(val) => {
+              if (val) setStatusFilter(val);
+            }}
           >
-            <option value="all">All Statuses</option>
-            <option value="active">Active Accounts</option>
-            <option value="blocked">Blocked Accounts</option>
-          </select>
+            <SelectTrigger className="w-full sm:w-44 h-9 rounded-xl border border-stone-200 bg-white px-3 text-xs text-stone-700 shadow-2xs hover:border-stone-300 focus-visible:border-[#844353] focus-visible:ring-0 cursor-pointer">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-stone-200 bg-white p-1 shadow-lg min-w-44">
+              <SelectItem
+                value="all"
+                className="rounded-lg px-2.5 py-1.5 text-xs text-stone-700 cursor-pointer hover:bg-[#FAF6F7] hover:text-[#844353] focus:bg-[#FAF6F7] focus:text-[#844353]"
+              >
+                All Statuses
+              </SelectItem>
+              <SelectItem
+                value="active"
+                className="rounded-lg px-2.5 py-1.5 text-xs text-stone-700 cursor-pointer hover:bg-[#FAF6F7] hover:text-[#844353] focus:bg-[#FAF6F7] focus:text-[#844353]"
+              >
+                Active Accounts
+              </SelectItem>
+              <SelectItem
+                value="blocked"
+                className="rounded-lg px-2.5 py-1.5 text-xs text-stone-700 cursor-pointer hover:bg-[#FAF6F7] hover:text-[#844353] focus:bg-[#FAF6F7] focus:text-[#844353]"
+              >
+                Blocked Accounts
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

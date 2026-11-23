@@ -77,6 +77,8 @@ export interface IBookingPayload {
   serviceCategory?: string;
   vendorId?: string;
   vendorEmail?: string;
+  vendorName?: string;
+  businessName?: string;
   customerId?: string;
   customerName?: string | null;
   customerEmail?: string | null;

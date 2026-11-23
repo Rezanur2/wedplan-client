@@ -12,7 +12,6 @@ import {
   Store,
   DollarSign,
   ArrowRight,
-  Inbox,
   XCircle,
   AlertTriangle,
   Loader2,
@@ -20,6 +19,7 @@ import {
 import { IBookingPayload } from "@/types";
 import { updateBookingStatus } from "@/lib/actions/bookings";
 import { toast } from "@/components/ui/toast";
+import EmptyState from "@/components/dashboard/shared/EmptyState";
 import {
   Dialog,
   DialogContent,
@@ -148,26 +148,12 @@ export default function MyBookingsList({
 
       {/* 3. Bookings List or Empty State */}
       {filteredBookings.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-[#844353]">
-            <Inbox className="h-6 w-6" />
-          </div>
-          <h3 className="mt-3 font-serif text-base font-bold text-stone-900">
-            {activeTab === "all" ? "No Bookings Found" : `No ${activeTab} bookings`}
-          </h3>
-          <p className="mt-1 text-xs text-stone-500 max-w-sm mx-auto">
-            You have not made any booking requests under this category yet.
-          </p>
-          <div className="mt-4">
-            <Link
-              href="/services"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#844353] hover:bg-[#6e3745] px-3.5 py-1.5 text-xs font-semibold text-white transition shadow-2xs"
-            >
-              <span>Browse Services</span>
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          title={activeTab === "all" ? "No Bookings Found" : `No ${activeTab} Bookings`}
+          description="You have not made any booking requests under this category yet."
+          actionLabel="Browse Services"
+          actionHref="/services"
+        />
       ) : (
         <div className="space-y-3">
           {filteredBookings.map((booking) => {
@@ -281,7 +267,7 @@ export default function MyBookingsList({
       {/* 4. Details Dialog */}
       {selectedBooking && (
         <Dialog open={Boolean(selectedBooking)} onOpenChange={() => setSelectedBooking(null)}>
-          <DialogContent className="max-w-md rounded-2xl bg-white p-5 shadow-xl border border-stone-200">
+          <DialogContent className="max-w-xs sm:max-w-md rounded-2xl bg-white p-5 shadow-xl border border-stone-200">
             <DialogHeader>
               <DialogTitle className="font-serif text-lg font-bold text-stone-900">
                 {selectedBooking.serviceName}
@@ -299,8 +285,24 @@ export default function MyBookingsList({
 
               <div className="space-y-1.5 rounded-xl border border-stone-200 p-3 text-stone-700">
                 <div className="flex justify-between border-b border-stone-100 pb-1.5">
-                  <span className="text-stone-400">Vendor</span>
-                  <span className="font-medium">{selectedBooking.vendorEmail}</span>
+                  <span className="text-stone-400">Vendor Name</span>
+                  <span className="font-medium text-stone-900 capitalize">
+                    {selectedBooking.vendorName}
+                  </span>
+                </div>
+                {selectedBooking.businessName && (
+                  <div className="flex justify-between border-b border-stone-100 pb-1.5">
+                    <span className="text-stone-400">Business Name</span>
+                    <span className="font-medium text-stone-900">
+                      {selectedBooking.businessName}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between border-b border-stone-100 pb-1.5">
+                  <span className="text-stone-400">Contact</span>
+                  <span className="font-medium text-stone-700">
+                    {selectedBooking.vendorEmail}
+                  </span>
                 </div>
                 <div className="flex justify-between border-b border-stone-100 pb-1.5">
                   <span className="text-stone-400">Event Date</span>
