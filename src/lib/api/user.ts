@@ -1,21 +1,6 @@
-"use server";
-
-import { auth } from "../auth";
-import { headers } from "next/headers";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
-export const getUsers = async () => {
-    const users = await auth.api.listUsers({
-        query: {
-            sortBy: "name",
-            sortDirection: "desc",
-        },
-        // This endpoint requires session cookies.
-        headers: await headers(),
-    });
-    return users;
-};
 
 export const getAllUsers = async () => {
     try {

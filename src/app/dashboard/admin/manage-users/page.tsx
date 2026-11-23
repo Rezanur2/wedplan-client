@@ -1,8 +1,8 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/core/server";
-import { getAllUsers } from "@/lib/api/user";
 import ManageUsers from "@/components/dashboard/admin/ManageUsers";
+import { getUsers } from "@/lib/actions/better-auth-users";
 
 export const metadata = {
   title: "Manage Users | Admin Dashboard | WedPlan",
@@ -23,7 +23,8 @@ export default async function ManageUsersPage() {
   }
 
   // Fetch all registered users
-  const users = await getAllUsers();
+  const data = await getUsers();
+  const userList = data?.users || [];
 
-  return <ManageUsers users={users} />;
+  return <ManageUsers users={userList} />;
 }

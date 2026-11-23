@@ -89,6 +89,16 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
   };
 
   const handleToggleBlock = (user: IDashboardUser) => {
+    const currentRole = (roles[user._id || user.id || ""] || user.role || "customer").toLowerCase();
+    if (currentRole === "admin") {
+      toast.add({
+        title: "Action Not Allowed",
+        description: "Admin accounts cannot be blocked.",
+        type: "error",
+      });
+      return;
+    }
+
     const willBlock = !user.isBlocked;
     toast.add({
       title: willBlock ? "Block User Event" : "Unblock User Event",
@@ -105,7 +115,7 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
         ? "bg-purple-50 text-purple-700 border-purple-200"
         : role === "vendor"
         ? "bg-rose-50 text-[#844353] border-rose-200"
-        : "bg-stone-100 text-stone-700 border-stone-200";
+        : "bg-sky-50 text-sky-700 border-sky-200";
 
     return (
       <span
@@ -156,7 +166,7 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
           <button
             type="button"
             onClick={() => handleRoleChange(user, "customer")}
-            className="rounded-lg border border-stone-200 bg-stone-50 px-2 py-0.5 text-[10px] font-medium text-stone-700 hover:bg-stone-200 transition cursor-pointer"
+            className="rounded-lg border border-sky-200 bg-sky-50/70 px-2 py-0.5 text-[10px] font-medium text-sky-700 hover:bg-sky-100 transition cursor-pointer"
           >
             Make Customer
           </button>
@@ -167,6 +177,9 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
 
   const renderActionButtons = (user: IDashboardUser) => {
     const isBlocked = Boolean(user.isBlocked);
+    const userRole = (roles[user._id || user.id || ""] || user.role || "customer").toLowerCase();
+    const isAdmin = userRole === "admin";
+
     return (
       <div className="flex items-center gap-1.5">
         <button
@@ -178,27 +191,29 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
           <span>View</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => handleToggleBlock(user)}
-          className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition cursor-pointer shadow-2xs ${
-            isBlocked
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-              : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-          }`}
-        >
-          {isBlocked ? (
-            <>
-              <CheckCircle2 className="h-3 w-3" />
-              <span>Unblock</span>
-            </>
-          ) : (
-            <>
-              <Ban className="h-3 w-3" />
-              <span>Block</span>
-            </>
-          )}
-        </button>
+        {!isAdmin && (
+          <button
+            type="button"
+            onClick={() => handleToggleBlock(user)}
+            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition cursor-pointer shadow-2xs ${
+              isBlocked
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+            }`}
+          >
+            {isBlocked ? (
+              <>
+                <CheckCircle2 className="h-3 w-3" />
+                <span>Unblock</span>
+              </>
+            ) : (
+              <>
+                <Ban className="h-3 w-3" />
+                <span>Block</span>
+              </>
+            )}
+          </button>
+        )}
       </div>
     );
   };

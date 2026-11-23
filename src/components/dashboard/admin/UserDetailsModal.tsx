@@ -85,7 +85,7 @@ export default function UserDetailsModal({
                       ? "bg-purple-50 text-purple-700 border-purple-200"
                       : userRole === "vendor"
                       ? "bg-rose-50 text-[#844353] border-rose-200"
-                      : "bg-stone-100 text-stone-700 border-stone-200"
+                      : "bg-sky-50 text-sky-700 border-sky-200"
                   }`}
                 >
                   <Shield className="h-2.5 w-2.5" />
