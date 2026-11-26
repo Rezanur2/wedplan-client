@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { toast } from "@/components/ui/toast";
 import { IDashboardUser } from "@/types";
+import { createCheckoutSession } from "@/lib/actions/payments";
+import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
 
 interface VendorCheckoutViewProps {
   user?: IDashboardUser | null;
@@ -29,10 +31,7 @@ export default function VendorCheckoutView({ user }: VendorCheckoutViewProps) {
   const handleCheckout = async () => {
     setIsSubmitting(true);
     try {
-      const res = await fetch("/api/checkout_sessions", {
-        method: "POST",
-      });
-      const data = await res.json();
+      const data = await createCheckoutSession();
       if (data?.url) {
         window.location.href = data.url;
       } else {
@@ -77,10 +76,8 @@ export default function VendorCheckoutView({ user }: VendorCheckoutViewProps) {
 
       {/* 2. Page Title */}
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-          VENDOR BILLING / CHECKOUT
-        </div>
-        <h1 className="mt-0.5 font-serif text-2xl sm:text-3xl font-bold text-stone-900">
+        <DashboardBreadcrumb section="VENDOR STUDIO" page="CHECKOUT" />
+        <h1 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-stone-900">
           Complete Your Premium Upgrade
         </h1>
         <p className="mt-1 text-xs text-stone-500">

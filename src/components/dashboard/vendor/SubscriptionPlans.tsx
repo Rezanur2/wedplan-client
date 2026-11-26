@@ -14,7 +14,7 @@ import {
   TrendingUp,
   BadgeCheck,
 } from "lucide-react";
-import VendorPlanBanner from "./VendorPlanBanner";
+import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
 import { IDashboardUser } from "@/types";
 
 interface SubscriptionPlansProps {
@@ -73,23 +73,114 @@ export default function SubscriptionPlans({
     },
   ];
 
+  const maxFreeLimit = 3;
+  const remainingFreeSlots = Math.max(0, maxFreeLimit - activeServiceCount);
+  const freeUsagePercent = Math.min(100, (activeServiceCount / maxFreeLimit) * 100);
+
   return (
     <div className="max-w-3xl mx-auto space-y-6 pb-12">
-      {/* 1. Header (Compact & Clean) */}
+      {/* 1. Header with Responsive Breadcrumb */}
       <div>
-        <div className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-          VENDOR / SUBSCRIPTION
-        </div>
-        <h1 className="mt-0.5 font-serif text-2xl font-bold text-stone-900">
+        <DashboardBreadcrumb
+          section="VENDOR STUDIO"
+          page="SUBSCRIPTION"
+          badge={
+            isPremium ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-300 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                <Crown className="h-3 w-3 text-amber-600 fill-amber-600" />
+                Premium Vendor
+              </span>
+            ) : undefined
+          }
+        />
+        <h1 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-stone-900">
           Vendor Membership Plans
         </h1>
         <p className="mt-0.5 text-xs text-stone-500">
-          Upgrade to Premium for unlimited service listings and prime visibility.
+          Manage your subscription tier and upgrade for unlimited wedding service listings.
         </p>
       </div>
 
-      {/* 2. Compact Live Usage Banner */}
-      <VendorPlanBanner activeCount={activeServiceCount} isPremium={isPremium} />
+      {/* 2. Current Membership Status Card */}
+      {isPremium ? (
+        <div className="rounded-2xl border border-amber-200 bg-linear-to-br from-amber-50/70 via-white to-amber-50/40 p-4 sm:p-5 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100/90 text-amber-700 shadow-2xs">
+                <Crown className="h-6 w-6 fill-amber-500 text-amber-600" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-stone-900">
+                    Lifetime Premium Vendor
+                  </h2>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    <ShieldCheck className="h-3 w-3" />
+                    Active Plan
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-stone-600 leading-relaxed">
+                  You have unlocked <strong className="font-semibold text-stone-900">unlimited service listings</strong>, verified premium crown badge, and priority search placement.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex sm:flex-col items-center sm:items-end justify-between border-t border-amber-100 sm:border-0 pt-3 sm:pt-0 shrink-0">
+              <span className="text-[11px] font-medium text-stone-500">Published Listings</span>
+              <span className="text-sm font-bold text-stone-900">
+                {activeServiceCount} Active Services
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
+                <Layers className="h-5 w-5 text-[#844353]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm sm:text-base font-bold text-stone-900">
+                    Free Plan: {activeServiceCount} of {maxFreeLimit} Services Used
+                  </h2>
+                  <span className="rounded-full bg-pink-50 border border-pink-200 px-2 py-0.5 text-[10px] font-semibold text-pink-700">
+                    {remainingFreeSlots} slot{remainingFreeSlots === 1 ? "" : "s"} left
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-stone-500 leading-relaxed">
+                  Free accounts can list up to 3 services. Upgrade to Premium for unlimited service listings.
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/dashboard/vendor/subscription/checkout"
+              className="inline-flex h-9 items-center justify-center rounded-xl bg-[#844353] px-4 text-xs font-semibold text-white shadow-xs hover:bg-[#6e3745] transition shrink-0 self-start sm:self-center"
+            >
+              Upgrade to Premium
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Link>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="mt-4 pt-3 border-t border-stone-100">
+            <div className="flex items-center justify-between text-[11px] text-stone-500 mb-1.5">
+              <span>Service Listing Capacity</span>
+              <span className="font-medium text-stone-700">{activeServiceCount} / {maxFreeLimit}</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-stone-100 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-300 ${
+                  activeServiceCount >= maxFreeLimit ? "bg-amber-500" : "bg-[#844353]"
+                }`}
+                style={{ width: `${freeUsagePercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 3. Compact Pricing Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 pt-1">

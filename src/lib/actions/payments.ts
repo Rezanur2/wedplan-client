@@ -1,14 +1,13 @@
+'use server'
+
+import { protectedMutation } from "../core/server";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
 export const checkoutVerify = async (sessionId: string) => {
   try {
-    const response = await fetch(`${BASE_URL}/transactions/checkout-verify`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ sessionId }),
-    });
+    const api = `${BASE_URL}/transactions/checkout-verify`;
+    const response = await protectedMutation(api, "POST", { sessionId });
 
     if (!response.ok) {
       const errText = await response.text();
@@ -25,3 +24,10 @@ export const checkoutVerify = async (sessionId: string) => {
     return { success: false, message: "Network connection error" };
   }
 };
+
+
+export const createCheckoutSession = async () => {
+  const api = `${BASE_URL}/create-checkout-session`;
+  const response = await protectedMutation(api, "POST");
+  return response.json();
+}
