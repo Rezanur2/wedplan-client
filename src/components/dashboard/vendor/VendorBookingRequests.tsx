@@ -31,6 +31,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
 
 interface VendorBookingRequestsProps {
   initialBookings?: IBookingPayload[];
@@ -92,16 +93,20 @@ export default function VendorBookingRequests({
 
   // Tab counts
   const totalCount = bookings.length;
-  const pendingCount = bookings.filter((b) => b.status?.toLowerCase() === "pending").length;
-  const acceptedCount = bookings.filter((b) => b.status?.toLowerCase() === "accepted").length;
-  const rejectedCount = bookings.filter((b) => {
-    const status = b.status?.toLowerCase();
+  const pendingCount = bookings.filter(
+    (bookingItem) => bookingItem.status?.toLowerCase() === "pending"
+  ).length;
+  const acceptedCount = bookings.filter(
+    (bookingItem) => bookingItem.status?.toLowerCase() === "accepted"
+  ).length;
+  const rejectedCount = bookings.filter((bookingItem) => {
+    const status = bookingItem.status?.toLowerCase();
     return status === "rejected" || status === "cancelled";
   }).length;
 
   // Filtered list based on active tab
-  const filteredBookings = bookings.filter((b) => {
-    const status = b.status?.toLowerCase();
+  const filteredBookings = bookings.filter((bookingItem) => {
+    const status = bookingItem.status?.toLowerCase();
     if (activeTab === "all") return true;
     if (activeTab === "pending") return status === "pending";
     if (activeTab === "accepted") return status === "accepted";
@@ -132,7 +137,9 @@ export default function VendorBookingRequests({
       const res = await updateBookingStatus(bookingId, status);
       if (res?.modifiedCount > 0 || res?.matchedCount > 0) {
         setBookings((prev) =>
-          prev.map((b) => (b._id === bookingId ? { ...b, status } : b))
+          prev.map((bookingItem) =>
+            bookingItem._id === bookingId ? { ...bookingItem, status } : bookingItem
+          )
         );
         toast.add({
           title: status === "Accepted" ? "Booking Accepted" : "Booking Declined",
@@ -166,9 +173,7 @@ export default function VendorBookingRequests({
     <div className="mx-auto max-w-5xl space-y-6 pb-16">
       {/* 1. Header */}
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-          VENDOR / Booking Requests
-        </div>
+        <DashboardBreadcrumb section="VENDOR STUDIO" page="BOOKING REQUESTS" />
         <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-stone-900">
           Booking Requests
         </h1>

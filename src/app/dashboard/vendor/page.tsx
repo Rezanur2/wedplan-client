@@ -30,9 +30,7 @@ export default async function VendorDashboardPage() {
   const services = await getMyServices(user?.id);
 
   // 2. Fetch vendor's booking requests
-  const bookings = await getBookings(
-    user?.email ? `vendorEmail=${encodeURIComponent(user.email)}` : ""
-  );
+  const bookings = await getBookings();
 
   // 3. Fetch live premium membership status
   const premiumData = await getUserPremiumById(user?.id || "");

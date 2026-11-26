@@ -21,8 +21,10 @@ export default async function AddServicePage() {
   const user = session.user as IDashboardUser;
 
   // 1. Get user premium status and total services count
-  const premiumResult = await getUserPremiumById(user.id || "");
-  const countResult = await getServicesCount(`vendorId=${user.id}`);
+  const [premiumResult, countResult] = await Promise.all([
+    getUserPremiumById(user.id || ""),
+    getServicesCount(),
+  ]);
 
   // 2. If vendor has 3 or more services and is not premium, send to checkout
   if (!premiumResult?.premium && countResult.count >= 3) {

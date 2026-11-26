@@ -120,6 +120,16 @@ export function EditServiceDialog({ service }: EditServiceDialogProps) {
       return;
     }
 
+    if (Number.isNaN(price) || price <= 0) {
+      toast.add({
+        title: "Invalid Price",
+        description: "Please enter a valid price greater than 0.",
+        type: "error",
+      });
+      setLoading(false);
+      return;
+    }
+
     const updatedImages = coverImage
       ? [coverImage, ...(service.images?.slice(1) || [])]
       : service.images || [];

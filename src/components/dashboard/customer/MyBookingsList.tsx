@@ -49,9 +49,9 @@ export default function MyBookingsList({
   const [isCancelling, setIsCancelling] = useState(false);
 
   // Tab Filtering
-  const filteredBookings = bookings.filter((b) => {
+  const filteredBookings = bookings.filter((bookingItem) => {
     if (activeTab === "all") return true;
-    return b.status?.toLowerCase() === activeTab.toLowerCase();
+    return bookingItem.status?.toLowerCase() === activeTab.toLowerCase();
   });
 
   // Confirm and Cancel Booking
@@ -63,8 +63,10 @@ export default function MyBookingsList({
       const res = await updateBookingStatus(bookingToCancel._id, "Cancelled");
       if (res?.modifiedCount > 0) {
         setBookings((prev) =>
-          prev.map((b) =>
-            b._id === bookingToCancel._id ? { ...b, status: "Cancelled" } : b
+          prev.map((bookingItem) =>
+            bookingItem._id === bookingToCancel._id
+              ? { ...bookingItem, status: "Cancelled" }
+              : bookingItem
           )
         );
         toast.add({
@@ -119,7 +121,7 @@ export default function MyBookingsList({
           const count =
             tab === "all"
               ? bookings.length
-              : bookings.filter((b) => b.status?.toLowerCase() === tab).length;
+              : bookings.filter((bookingItem) => bookingItem.status?.toLowerCase() === tab).length;
           const isActive = activeTab === tab;
 
           return (
@@ -191,7 +193,7 @@ export default function MyBookingsList({
                     <div className="flex items-center gap-1.5 text-xs text-stone-500">
                       <Store className="h-3.5 w-3.5 text-stone-400" />
                       <span className="font-medium text-stone-700 truncate max-w-xs">
-                        {booking.vendorEmail || "Vendor"}
+                        {booking.businessName || booking.vendorName || booking.vendorEmail || "Vendor"}
                       </span>
                     </div>
                     <span
@@ -224,7 +226,7 @@ export default function MyBookingsList({
                     </div>
                     <div className="flex items-center gap-1 font-semibold text-stone-800">
                       <DollarSign className="h-3.5 w-3.5 text-[#844353]" />
-                      <span>{Number(booking.servicePrice ?? (booking as unknown as { price?: number | string }).price ?? 0).toLocaleString()}</span>
+                      <span>{Number(booking.servicePrice || 0).toLocaleString()}</span>
                     </div>
                   </div>
 
@@ -315,7 +317,7 @@ export default function MyBookingsList({
                 <div className="flex justify-between pt-0.5">
                   <span className="text-stone-400">Price</span>
                   <span className="font-bold text-stone-900">
-                    ${Number(selectedBooking.servicePrice ?? (selectedBooking as unknown as { price?: number | string }).price ?? 0).toLocaleString()}
+                    ${Number(selectedBooking.servicePrice || 0).toLocaleString()}
                   </span>
                 </div>
               </div>

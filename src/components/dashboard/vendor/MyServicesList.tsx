@@ -6,11 +6,14 @@ import {
   Plus,
   BarChart3,
   ShieldCheck,
+  Package,
 } from "lucide-react";
 import { IBookingPayload, IVendorService, TFilterTab } from "@/types";
 import ServiceCard from "./ServiceCard";
 import EmptySlotCard from "./EmptySlotCard";
 import VendorPlanBanner from "./VendorPlanBanner";
+import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
+import EmptyState from "@/components/dashboard/shared/EmptyState";
 
 interface MyServicesListProps {
   services?: IVendorService[];
@@ -27,16 +30,28 @@ export default function MyServicesList({
 
   // Tab counts
   const totalCount = services.length;
-  const activeCount = services.filter((s) => s.status === "Active").length;
-  const reviewCount = services.filter(
-    (s) => s.status === "Pending" || s.status === "Under Review"
+  const usedServicesCount = services.filter(
+    (serviceItem) => (serviceItem.status || "").toLowerCase() !== "rejected"
+  ).length;
+  const activeCount = services.filter((serviceItem) => {
+    const rawStatus = (serviceItem.status || "Pending").toLowerCase();
+    return rawStatus === "active" || rawStatus === "approved";
+  }).length;
+  const reviewCount = services.filter((serviceItem) => {
+    const rawStatus = (serviceItem.status || "Pending").toLowerCase();
+    return rawStatus === "pending" || rawStatus === "under review";
+  }).length;
+  const pausedCount = services.filter(
+    (serviceItem) => (serviceItem.status || "").toLowerCase() === "paused"
   ).length;
 
   // Filtered services based on current active tab
-  const filteredServices = services.filter((s) => {
-    if (activeTab === "active") return s.status === "Active";
+  const filteredServices = services.filter((serviceItem) => {
+    const rawStatus = (serviceItem.status || "Pending").toLowerCase();
+    if (activeTab === "active") return rawStatus === "active" || rawStatus === "approved";
     if (activeTab === "review")
-      return s.status === "Pending" || s.status === "Under Review";
+      return rawStatus === "pending" || rawStatus === "under review";
+    if (activeTab === "paused") return rawStatus === "paused";
     return true;
   });
 
@@ -45,9 +60,7 @@ export default function MyServicesList({
       {/* 1. Header Row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-stone-500">
-            <span>VENDOR / Services</span>
-          </div>
+          <DashboardBreadcrumb section="VENDOR STUDIO" page="SERVICES" />
           <h1 className="mt-1 font-serif text-3xl sm:text-4xl text-stone-900">
             My Services
           </h1>
@@ -77,7 +90,7 @@ export default function MyServicesList({
       </div>
 
       {/* 2. Plan Banner */}
-      <VendorPlanBanner activeCount={services.length} isPremium={isPremium} />
+      <VendorPlanBanner activeCount={usedServicesCount} isPremium={isPremium} />
 
       {/* 3. Filter Tabs & Accreditation */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
@@ -127,6 +140,23 @@ export default function MyServicesList({
               {reviewCount}
             </span>
           </button>
+
+          {pausedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("paused")}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition cursor-pointer ${
+                activeTab === "paused"
+                  ? "bg-white text-stone-900 shadow-2xs"
+                  : "text-stone-600 hover:text-stone-900"
+              }`}
+            >
+              <span>Paused</span>
+              <span className="rounded-full bg-amber-100 px-1.5 py-0.2 text-[10px] text-amber-800 font-semibold">
+                {pausedCount}
+              </span>
+            </button>
+          )}
         </div>
 
         {/* Accreditation Badge */}
@@ -136,40 +166,49 @@ export default function MyServicesList({
         </div>
       </div>
 
-      {/* 4. Responsive Grid of Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-        {filteredServices.map((service) => {
-          const serviceId = service._id || service.id;
-          const bookingCount = bookings.filter(
-            (b) => b.serviceId === serviceId
-          ).length;
+      {/* 4. Responsive Grid of Cards or Empty State */}
+      {filteredServices.length === 0 && (activeTab !== "all" || isPremium) ? (
+        <EmptyState
+          icon={Package}
+          title={services.length === 0 ? "No Services Published Yet" : "No Services Under This Filter"}
+          description={
+            services.length === 0
+              ? "Publish your first wedding service listing to start receiving booking requests from couples."
+              : "There are currently no services matching this status tab."
+          }
+          actionLabel={services.length === 0 ? "Add New Service" : "Show All Services"}
+          actionHref={services.length === 0 ? "/dashboard/vendor/add-service" : undefined}
+          onAction={services.length === 0 ? undefined : () => setActiveTab("all")}
+        />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          {filteredServices.map((service) => {
+            const serviceId = service._id || service.id || "";
+            const bookingCount = bookings.filter(
+              (bookingItem) => bookingItem.serviceId === serviceId
+            ).length;
 
-          return (
-            <ServiceCard
-              key={service.id || service._id || service.serviceName}
-              service={service}
-              bookingCount={bookingCount}
-            />
-          );
-        })}
+            return (
+              <ServiceCard
+                key={serviceId || service.serviceName}
+                service={service}
+                bookingCount={bookingCount}
+              />
+            );
+          })}
 
-        {/* Show Empty Slot Card when on All tab and under 3 services for free plan */}
-        {activeTab === "all" && !isPremium && services.length < 3 && (
-          <EmptySlotCard remainingSlots={Math.max(1, 3 - services.length)} />
-        )}
-      </div>
+          {/* Show Empty Slot Card when on All tab and under 3 services for free plan */}
+          {activeTab === "all" && !isPremium && usedServicesCount < 3 && (
+            <EmptySlotCard remainingSlots={Math.max(1, 3 - usedServicesCount)} />
+          )}
+        </div>
+      )}
 
-      {/* 5. Pagination / Footer Info */}
+      {/* 5. Footer Info */}
       <div className="flex items-center justify-between border-t border-stone-200 pt-4 text-xs text-stone-500">
         <div>
-          Showing <span className="font-medium text-stone-800">1–{filteredServices.length}</span> of{" "}
+          Showing <span className="font-medium text-stone-800">{filteredServices.length}</span> of{" "}
           <span className="font-medium text-stone-800">{totalCount}</span> services
-        </div>
-
-        <div className="flex items-center gap-1">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-stone-900 text-xs font-medium text-white shadow-2xs">
-            1
-          </span>
         </div>
       </div>
     </div>

@@ -35,6 +35,7 @@ import { uploadImageToImgBB } from "@/lib/uploadImage";
 import { ServiceFormData, IDashboardUser } from "@/types";
 import { createService, getServicesCount } from "@/lib/actions/services";
 import { getUserPremiumById } from "@/lib/api/user";
+import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
 
 
 const CATEGORIES = [
@@ -135,7 +136,7 @@ export default function AddServiceForm({
 
   // Remove image from gallery
   const handleRemoveImage = (indexToRemove: number) => {
-    setImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+    setImages((prev) => prev.filter((_, imageIndex) => imageIndex !== indexToRemove));
   };
 
   // Required field validation
@@ -168,22 +169,7 @@ export default function AddServiceForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (user?.id) {
-      const premiumResult = await getUserPremiumById(user.id);
-      const countResult = await getServicesCount(`vendorId=${user.id}`);
-
-      if (!premiumResult?.premium && countResult.count >= 3) {
-        toast.add({
-          title: "Limit Reached",
-          description: "Free plan allows up to 3 services. Please upgrade to Premium.",
-          type: "error",
-        });
-        router.push("/dashboard/vendor/subscription/checkout");
-        return;
-      }
-    }
-
-    // Validate required fields
+    // Validate required fields first
     if (!validateForm()) {
       toast.add({
         title: "Required Fields Missing",
@@ -194,31 +180,76 @@ export default function AddServiceForm({
     }
 
     setIsSubmitting(true);
+    let isRedirecting = false;
 
-    const serviceData: ServiceFormData = {
-      ...form,
-      price: Number(form.price),
-      images: images,
-      vendorId: user?.id || vendorId || "",
-      vendorName: user?.name || "Verified Vendor",
-      vendorEmail: user?.email || "",
-      vendorAvatar: user?.image || "",
-      businessName: user?.businessName || user?.name || "Wedding Specialist",
-      status: "Pending",
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      if (user?.id) {
+        const [premiumResult, countResult] = await Promise.all([
+          getUserPremiumById(user.id),
+          getServicesCount(),
+        ]);
 
-    await createService(serviceData);
+        if (!premiumResult?.premium && countResult.count >= 3) {
+          toast.add({
+            title: "Limit Reached",
+            description: "Free plan allows up to 3 services. Please upgrade to Premium.",
+            type: "error",
+          });
+          isRedirecting = true;
+          router.push("/dashboard/vendor/subscription/checkout");
+          return;
+        }
+      }
 
-    await new Promise((res) => setTimeout(res, 500));
-    setIsSubmitting(false);
+      const serviceData: ServiceFormData = {
+        ...form,
+        price: Number(form.price),
+        images: images,
+        vendorId: user?.id || vendorId || "",
+        vendorName: user?.name || "Verified Vendor",
+        vendorEmail: user?.email || "",
+        vendorAvatar: user?.image || "",
+        businessName: user?.businessName || user?.name || "Wedding Specialist",
+        status: "Pending",
+        createdAt: new Date().toISOString(),
+      };
 
-    toast.add({
-      title: "Success",
-      description: "Service submitted for review.",
-      type: "success",
-    });
-    router.push("/dashboard/vendor/my-services");
+      const createResult = await createService(serviceData);
+
+      if (createResult?.insertedId || createResult?.acknowledged) {
+        isRedirecting = true;
+        toast.add({
+          title: "Success",
+          description: "Service submitted for review.",
+          type: "success",
+        });
+        router.push("/dashboard/vendor/my-services");
+        router.refresh();
+        return;
+      }
+
+      toast.add({
+        title: createResult?.limitReached ? "Limit Reached" : "Submission Failed",
+        description: createResult?.message || "Could not submit your service. Please try again.",
+        type: "error",
+      });
+
+      if (createResult?.limitReached) {
+        isRedirecting = true;
+        router.push("/dashboard/vendor/subscription/checkout");
+      }
+    } catch (error) {
+      console.error("Failed to submit service:", error);
+      toast.add({
+        title: "Submission Failed",
+        description: "Could not submit your service. Please try again.",
+        type: "error",
+      });
+    } finally {
+      if (!isRedirecting) {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   return (
@@ -230,9 +261,7 @@ export default function AddServiceForm({
       {/* 1. Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-            VENDOR / Add Service
-          </div>
+          <DashboardBreadcrumb section="VENDOR STUDIO" page="ADD SERVICE" />
           <h1 className="mt-1 font-serif text-3xl text-stone-900">
             Add a New Service
           </h1>
@@ -704,7 +733,7 @@ export default function AddServiceForm({
               </div>
             </div>
 
-            {user?.businessName && (
+            {user?.businessName ? (
               <div className="sm:col-span-2">
                 <Label className="text-xs font-semibold mb-1 block text-stone-600">
                   Business Name
@@ -718,6 +747,23 @@ export default function AddServiceForm({
                     className="h-9 pl-8 text-xs rounded-xl bg-stone-100/80 text-stone-600 cursor-not-allowed border-stone-200"
                   />
                 </div>
+              </div>
+            ) : (
+              <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-xs text-amber-900">
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4 text-amber-600 shrink-0" />
+                  <span>
+                    No business / studio name set yet. Add yours in{" "}
+                    <strong>Profile Settings</strong> so couples see your brand.
+                  </span>
+                </div>
+                <Link
+                  href="/dashboard/vendor/profile"
+                  className="inline-flex items-center gap-1 font-semibold text-[#844353] hover:underline whitespace-nowrap shrink-0"
+                >
+                  <span>Profile Settings</span>
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
             )}
           </div>

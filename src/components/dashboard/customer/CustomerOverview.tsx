@@ -14,6 +14,7 @@ import {
   MapPin,
   Eye,
   ArrowRight,
+  Home,
 } from "lucide-react";
 import { IDashboardUser, IBookingPayload } from "@/types";
 import EmptyState from "@/components/dashboard/shared/EmptyState";
@@ -158,8 +159,15 @@ export default function CustomerOverview({
             </div>
           </div>
 
-          {/* Quick Action Button on Top Right */}
-          <div className="flex items-center gap-3 shrink-0 self-start sm:self-center">
+          {/* Quick Action Buttons on Top Right */}
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start sm:self-center">
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-stone-200/90 bg-white hover:bg-stone-50 px-3.5 py-2.5 text-xs font-semibold text-stone-700 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Home className="h-4 w-4 text-stone-500" />
+              <span>Home</span>
+            </Link>
             <Link
               href="/services"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#844353] hover:bg-[#6e3745] px-4 py-2.5 text-xs font-semibold text-white shadow-2xs transition-colors cursor-pointer"
@@ -249,11 +257,7 @@ export default function CustomerOverview({
                 </thead>
                 <tbody className="divide-y divide-stone-100">
                   {recentBookings.map((bookingItem) => {
-                    const priceValue = Number(
-                      bookingItem.servicePrice ??
-                        (bookingItem as unknown as { price?: number | string }).price ??
-                        0
-                    ).toLocaleString();
+                    const priceValue = Number(bookingItem.servicePrice || 0).toLocaleString();
 
                     return (
                       <tr
@@ -351,11 +355,7 @@ export default function CustomerOverview({
             {/* Tablet & Mobile Responsive List View (< lg) */}
             <div className="lg:hidden divide-y divide-stone-100">
               {recentBookings.map((bookingItem) => {
-                const priceValue = Number(
-                  bookingItem.servicePrice ??
-                    (bookingItem as unknown as { price?: number | string }).price ??
-                    0
-                ).toLocaleString();
+                const priceValue = Number(bookingItem.servicePrice || 0).toLocaleString();
 
                 return (
                   <div
@@ -503,11 +503,7 @@ export default function CustomerOverview({
                 <div className="flex justify-between pt-0.5">
                   <span className="text-stone-400">Price</span>
                   <span className="font-bold text-stone-900">
-                    ${Number(
-                      selectedBooking.servicePrice ??
-                        (selectedBooking as unknown as { price?: number | string }).price ??
-                        0
-                    ).toLocaleString()}
+                    ${Number(selectedBooking.servicePrice || 0).toLocaleString()}
                   </span>
                 </div>
               </div>

@@ -24,18 +24,40 @@ import { toast } from "@/components/ui/toast"
 export function DeleteServiceDialog({ service }: { service: IVendorService }) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const handleDelete = async() => {
-        const res = await deleteService(service._id as string);
-        
-        if (res.deletedCount) {
-            setOpen(false);
+    const handleDelete = async () => {
+        const serviceId = (service._id || service.id) as string;
+        if (!serviceId) return;
+
+        setIsDeleting(true);
+        try {
+            const res = await deleteService(serviceId);
+
+            if (res?.deletedCount) {
+                setOpen(false);
+                toast.add({
+                    title: "Service Deleted",
+                    description: "The service has been permanently deleted.",
+                    type: "info",
+                });
+                router.refresh();
+            } else {
+                toast.add({
+                    title: "Delete Failed",
+                    description: res?.message || "Could not delete this service. Please try again.",
+                    type: "error",
+                });
+            }
+        } catch (error) {
+            console.error("Failed to delete service:", error);
             toast.add({
-                title: "Service Deleted", 
-                description: "The service has been permanently deleted.",
-                type: "info",
-            })
-            router.refresh();
+                title: "Delete Failed",
+                description: "Failed to connect to the server. Please try again.",
+                type: "error",
+            });
+        } finally {
+            setIsDeleting(false);
         }
     }
   return (
@@ -63,8 +85,10 @@ export function DeleteServiceDialog({ service }: { service: IVendorService }) {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel variant="outline">Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} variant="destructive">Delete</AlertDialogAction>
+          <AlertDialogCancel variant="outline" disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={isDeleting} variant="destructive">
+            {isDeleting ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

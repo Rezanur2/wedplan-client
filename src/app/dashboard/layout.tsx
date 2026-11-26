@@ -26,6 +26,10 @@ export default async function DashboardLayout({
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
   const user = session.user as IDashboardUser;
+
+  if (user?.isBlocked) {
+    redirect("/unauthorized");
+  }
   const isVendor = user?.role?.toLowerCase() === "vendor";
 
   let pendingCount = 0;
@@ -34,16 +38,12 @@ export default async function DashboardLayout({
   if (isVendor && user?.id) {
     try {
       const [bookings, premiumData] = await Promise.all([
-        getBookings(
-          user.email
-            ? `vendorEmail=${encodeURIComponent(user.email)}`
-            : `vendorId=${encodeURIComponent(user.id)}`
-        ),
+        getBookings(),
         getUserPremiumById(user.id),
       ]);
 
       pendingCount = (bookings || []).filter(
-        (b) => (b.status || "").toLowerCase() === "pending"
+        (bookingItem) => (bookingItem.status || "").toLowerCase() === "pending"
       ).length;
 
       if (premiumData?.premium !== undefined) {

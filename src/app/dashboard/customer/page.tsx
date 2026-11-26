@@ -18,9 +18,7 @@ export default async function CustomerDashboardPage() {
   }
 
   const currentUser = session.user as IDashboardUser;
-  const userBookings = await getBookings(
-    `email=${encodeURIComponent(currentUser.email || "")}`
-  );
+  const userBookings = await getBookings();
 
   return (
     <CustomerOverview

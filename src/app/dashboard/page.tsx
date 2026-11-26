@@ -9,7 +9,7 @@ export default async function DashboardPage() {
     redirect("/signin");
   }
 
-  const role = session.user.role;
+  const role = (session.user.role || "").toLowerCase();
 
   // Role-based destination redirection
   if (role === "admin") {

@@ -9,8 +9,12 @@ import {
   Users,
   Sparkles,
   Calendar,
+  PauseCircle,
+  AlertCircle,
 } from "lucide-react";
 import { IVendorService } from "@/types";
+import { updateService } from "@/lib/actions/services";
+import { toast } from "@/components/ui/toast";
 import { DeleteServiceDialog } from "./DeleteServiceDialog";
 import { EditServiceDialog } from "./EditServiceDialog";
 
@@ -24,9 +28,36 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
   const [isAvailable, setIsAvailable] = useState<boolean>(
     service.isAvailable ?? true,
   );
+  const serviceId = service._id || service.id || "";
 
-  const isPending =
-    service.status === "Pending" || service.status === "Under Review";
+  const handleToggleAvailability = async () => {
+    const nextValue = !isAvailable;
+    const result = await updateService(serviceId, { isAvailable: nextValue });
+
+    if (result?.modifiedCount > 0 || result?.acknowledged) {
+      setIsAvailable(nextValue);
+      toast.add({
+        title: nextValue ? "Service Active" : "Service Paused",
+        description: nextValue
+          ? "Couples can now book this service."
+          : "This service is now hidden from public search.",
+        type: "success",
+      });
+    } else {
+      toast.add({
+        title: "Update Failed",
+        description: result?.message || "Could not update service availability.",
+        type: "error",
+      });
+    }
+  };
+
+  // Status checks
+  const rawStatus = (service.status || "Pending").toLowerCase();
+  const isActive = rawStatus === "active" || rawStatus === "approved";
+  const isPending = rawStatus === "pending" || rawStatus === "under review";
+  const isPaused = rawStatus === "paused";
+  const isRejected = rawStatus === "rejected";
 
   const displayImage =
     service.images && service.images.length > 0 && service.images[0]
@@ -50,15 +81,25 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
         {/* Top Badges Row */}
         <div className="absolute top-3 inset-x-3 flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0">
-            {isPending ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-white shadow-xs whitespace-nowrap shrink-0">
-                <Clock className="h-3 w-3 shrink-0" />
-                Pending Approval
-              </span>
-            ) : (
+            {isActive ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/95 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-stone-800 shadow-xs whitespace-nowrap shrink-0">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                 Active
+              </span>
+            ) : isPaused ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/90 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-white shadow-xs whitespace-nowrap shrink-0">
+                <PauseCircle className="h-3 w-3 shrink-0" />
+                Paused by Admin
+              </span>
+            ) : isRejected ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-600/90 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-white shadow-xs whitespace-nowrap shrink-0">
+                <AlertCircle className="h-3 w-3 shrink-0" />
+                Rejected
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/90 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-white shadow-xs whitespace-nowrap shrink-0">
+                <Clock className="h-3 w-3 shrink-0" />
+                Pending Approval
               </span>
             )}
 
@@ -75,9 +116,14 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
                 Under Review
               </span>
             )}
+            {isPaused && (
+              <span className="hidden sm:inline-flex items-center rounded-full bg-amber-900/80 backdrop-blur-xs px-2.5 py-1 text-[10px] sm:text-[11px] font-medium text-amber-100 whitespace-nowrap shrink-0">
+                Paused
+              </span>
+            )}
             <Link
-              href={`/services/${service._id || service.id}`}
-              title={isPending ? "Preview Service Listing" : "View Service Details"}
+              href={`/services/${serviceId}`}
+              title={isPending ? "Preview Service Listing" : isPaused ? "Preview Paused Service" : "View Service Details"}
               className="rounded-lg bg-black/40 backdrop-blur-xs p-1.5 text-white transition hover:bg-black/60 cursor-pointer shrink-0 inline-flex items-center justify-center"
             >
               <ExternalLink className="h-3.5 w-3.5" />
@@ -109,9 +155,9 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
           <h3 className="font-serif text-lg font-semibold text-stone-900 line-clamp-1">
             {service.serviceName}
           </h3>
-          {(service.id || service._id) && (
+          {serviceId && (
             <span className="shrink-0 rounded bg-stone-100 px-2 py-0.5 text-[11px] font-mono text-stone-500">
-              ID {service.id || `#${service._id?.slice(-4)}`}
+              ID #{serviceId.slice(-4)}
             </span>
           )}
         </div>
@@ -135,18 +181,44 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
           </div>
         )}
 
+        {/* Paused by Admin Notice Box */}
+        {isPaused && (
+          <div className="my-3.5 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900">
+            <div className="flex items-center gap-1.5 font-semibold">
+              <PauseCircle className="h-4 w-4 shrink-0 text-amber-600" />
+              <span>Service Paused by Admin</span>
+            </div>
+            <p className="mt-1 text-[11px] text-amber-800 leading-relaxed">
+              This service has been paused by an administrator and is currently hidden from the public marketplace.
+            </p>
+          </div>
+        )}
+
+        {/* Rejected Service Notice Box */}
+        {isRejected && (
+          <div className="my-3.5 rounded-xl border border-rose-200 bg-rose-50/70 p-3 text-xs text-rose-900">
+            <div className="flex items-center gap-1.5 font-semibold">
+              <AlertCircle className="h-4 w-4 shrink-0 text-rose-600" />
+              <span>Listing Rejected</span>
+            </div>
+            <p className="mt-1 text-[11px] text-rose-800 leading-relaxed">
+              This listing did not pass the platform verification standard. Please review details or submit a new listing.
+            </p>
+          </div>
+        )}
+
         {/* Features / Highlights */}
         {service.features && service.features.length > 0 && (
           <div className="mt-auto flex flex-wrap items-center gap-2 pt-2 text-[11px] text-stone-500">
-            {service.features.map((feat, idx) => (
-              <span key={idx} className="inline-flex items-center gap-1">
-                {idx === 0 ? (
+            {service.features.map((feat, featureIndex) => (
+              <span key={featureIndex} className="inline-flex items-center gap-1">
+                {featureIndex === 0 ? (
                   <Users className="h-3 w-3 text-stone-400" />
                 ) : (
                   <Sparkles className="h-3 w-3 text-stone-400" />
                 )}
                 <span>{feat}</span>
-                {idx < service.features!.length - 1 && (
+                {featureIndex < service.features!.length - 1 && (
                   <span className="text-stone-300 ml-1">·</span>
                 )}
               </span>
@@ -156,7 +228,7 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
         {/* Booking Requests / Inquiries Count Link */}
         <div className="mt-3 flex items-center justify-between pt-1 border-t border-stone-100">
           <Link
-            href={`/dashboard/vendor/booking-requests?serviceId=${service._id || service.id}`}
+            href={`/dashboard/vendor/booking-requests?serviceId=${serviceId}`}
             className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-stone-50 px-2.5 py-1 text-xs font-medium text-stone-700 hover:bg-[#844353]/10 hover:border-[#844353]/30 hover:text-[#844353] transition"
             title="View booking requests for this service"
           >
@@ -170,11 +242,15 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
 
       {/* 3. Card Footer: Availability Switch & Actions */}
       <div className="border-t border-stone-100 bg-stone-50/50 px-4 py-3 sm:px-5">
-        {isPending ? (
+        {isPending || isPaused || isRejected ? (
           <div className="flex items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 text-xs italic text-stone-400">
-              <Lock className="h-3.5 w-3.5" />
-              Hidden from public search
+            <span className="inline-flex items-center gap-1.5 text-xs italic text-stone-500">
+              <Lock className="h-3.5 w-3.5 text-stone-400" />
+              {isPaused
+                ? "Paused by Admin (Hidden)"
+                : isRejected
+                ? "Rejected (Hidden)"
+                : "Hidden from public search"}
             </span>
 
             <div className="flex items-center gap-2">
@@ -190,7 +266,7 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
                 type="button"
                 role="switch"
                 aria-checked={isAvailable}
-                onClick={() => setIsAvailable(!isAvailable)}
+                onClick={handleToggleAvailability}
                 className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   isAvailable ? "bg-[#844353]" : "bg-stone-300"
                 }`}

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { IDashboardUser, IBookingPayload, ServiceFormData } from "@/types";
 import VendorPlanBanner from "./VendorPlanBanner";
+import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800";
@@ -38,6 +39,9 @@ export default function VendorOverview({
 }: VendorOverviewProps) {
   // Metric calculations
   const totalServices = services.length;
+  const usedServicesCount = services.filter(
+    (serviceItem) => (serviceItem.status || "").toLowerCase() !== "rejected"
+  ).length;
   const activeServices = services.filter((serviceItem) => {
     const status = (serviceItem.status || "").toLowerCase();
     return status === "active" || status === "approved";
@@ -98,17 +102,18 @@ export default function VendorOverview({
       {/* 1. Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-stone-400">
-              VENDOR STUDIO / OVERVIEW
-            </span>
-            {isPremium && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-300 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
-                <Crown className="h-3 w-3 text-amber-600 fill-amber-600" />
-                Premium Vendor
-              </span>
-            )}
-          </div>
+          <DashboardBreadcrumb
+            section="VENDOR STUDIO"
+            page="OVERVIEW"
+            badge={
+              isPremium ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-300 px-2 py-0.5 text-[10px] font-semibold text-amber-800">
+                  <Crown className="h-3 w-3 text-amber-600 fill-amber-600" />
+                  Premium Vendor
+                </span>
+              ) : undefined
+            }
+          />
           <h1 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-stone-900">
             Welcome back, {user?.name || "Vendor"}
           </h1>
@@ -128,7 +133,7 @@ export default function VendorOverview({
       </div>
 
       {/* 2. Subscription Slot Usage Banner (shown only for free tier) */}
-      <VendorPlanBanner activeCount={totalServices} isPremium={isPremium} />
+      <VendorPlanBanner activeCount={usedServicesCount} isPremium={isPremium} />
 
       {/* 3. Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">

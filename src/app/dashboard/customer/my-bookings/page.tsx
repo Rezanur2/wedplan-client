@@ -18,7 +18,7 @@ export default async function MyBookingsPage() {
     redirect("/signin?redirectTo=/dashboard/customer/my-bookings");
   }
 
-  const bookings = await getBookings(`email=${encodeURIComponent(session.user.email)}`);
+  const bookings = await getBookings();
 
   return <MyBookingsList bookings={bookings} />;
 }

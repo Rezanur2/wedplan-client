@@ -21,6 +21,7 @@ export interface IDashboardUser {
   isBlocked?: boolean | null;
   businessName?: string | null;
   subscriptionPlan?: string | null;
+  premium?: boolean | null;
   subscriptionExpiresAt?: Date | string | null;
   createdAt?: string | Date | null;
 }
@@ -32,8 +33,8 @@ export interface DashboardSidebarProps {
 }
 
 //SERVICE TYPES
-export type TServiceStatus = "Active" | "Pending" | "Under Review";
-export type TFilterTab = "all" | "active" | "review";
+export type TServiceStatus = "Active" | "Pending" | "Under Review" | "Paused" | "Rejected" | string;
+export type TFilterTab = "all" | "active" | "review" | "paused";
 
 export interface ServiceFormData {
   serviceName: string;
@@ -48,6 +49,8 @@ export interface ServiceFormData {
   vendorEmail?: string;
   vendorAvatar?: string;
   businessName?: string;
+  isPremium?: boolean;
+  isAvailable?: boolean;
   status?: TServiceStatus | string;
   createdAt?: string;
 }
@@ -55,16 +58,11 @@ export interface ServiceFormData {
 export interface IVendorService extends ServiceFormData {
   _id?: string;
   id?: string;
-  isAvailable?: boolean;
   views?: number;
   inquiries?: number;
   bookings?: number;
   features?: string[];
   reviewNotice?: string;
-  vendorName?: string;
-  vendorAvatar?: string;
-  vendorSubtitle?: string;
-  businessName?: string;
 }
 
 // BOOKING TYPES
@@ -79,6 +77,7 @@ export interface IBookingPayload {
   vendorEmail?: string;
   vendorName?: string;
   businessName?: string;
+  isPremium?: boolean;
   customerId?: string;
   customerName?: string | null;
   customerEmail?: string | null;
@@ -87,4 +86,20 @@ export interface IBookingPayload {
   message?: string;
   status?: string;
   createdAt?: string | Date;
+}
+
+// TRANSACTION TYPES
+export interface ITransaction {
+  _id?: string;
+  id?: string;
+  vendorId?: string;
+  plan?: string;
+  amount: number;
+  currency?: string;
+  stripeSessionId?: string;
+  stripeSubscriptionId?: string | null;
+  status?: string;
+  createdAt?: string | Date;
+  vendorName?: string;
+  vendorEmail?: string;
 }

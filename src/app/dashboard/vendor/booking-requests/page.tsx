@@ -31,12 +31,7 @@ export default async function BookingRequestsPage({
   const filterServiceId = resolvedParams?.serviceId;
 
   // Fetch bookings for this vendor
-  const vendorEmail = session.user.email || "";
-  const vendorId = session.user.id || "";
-  let query = `vendorEmail=${encodeURIComponent(vendorEmail)}&vendorId=${encodeURIComponent(vendorId)}`;
-  if (filterServiceId) {
-    query += `&serviceId=${encodeURIComponent(filterServiceId)}`;
-  }
+  const query = filterServiceId ? `serviceId=${encodeURIComponent(filterServiceId)}` : "";
   const bookings = await getBookings(query);
 
   return (
