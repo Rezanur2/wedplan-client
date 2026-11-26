@@ -1,4 +1,5 @@
 import { ServiceFormData } from "@/types";
+import { authFetch } from "../core/server";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
@@ -21,7 +22,7 @@ export const getMyServices = async (vendorId?: string): Promise<ServiceFormData[
     const url = vendorId
       ? `${BASE_URL}/my-services?vendorId=${vendorId}`
       : `${BASE_URL}/my-services`;
-    const res = await fetch(url, { cache: "no-store" });
+    const res = await authFetch(url);
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
@@ -33,24 +34,11 @@ export const getMyServices = async (vendorId?: string): Promise<ServiceFormData[
 // Get Service By Id
 export const getServiceById = async (serviceId: string) => {
   try {
-    const res = await fetch(`${BASE_URL}/services/${serviceId}`, {
-      cache: "no-store",
-    });
+    const res = await authFetch(`${BASE_URL}/services/${serviceId}`);
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
     console.error("Error fetching service by id:", error);
     return null;
   }
-};
-
-export const createService = async (data: ServiceFormData) => {
-  const res = await fetch(`${BASE_URL}/services`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
 };

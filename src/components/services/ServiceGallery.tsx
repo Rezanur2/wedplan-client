@@ -31,7 +31,7 @@ export default function ServiceGallery({
           src={activeImage}
           alt={`${serviceName} - Photo ${activeIndex + 1}`}
           fill
-          priority
+          loading="eager"
           sizes="(max-width: 768px) 100vw, 65vw"
           className="object-cover transition-all duration-500 ease-out"
         />

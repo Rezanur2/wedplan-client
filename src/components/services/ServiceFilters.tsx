@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useTransition } from "react";
+import React, { useState, useRef, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, SlidersHorizontal } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -50,42 +50,74 @@ export default function ServiceFilters({
   initialSort = "recommended",
 }: ServiceFiltersProps) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
-  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState(initialCategory || "All");
-  const [location, setLocation] = useState(initialLocation);
   const [sort, setSort] = useState(initialSort || "recommended");
-
-  // Keep internal state in sync if URL props change from outside
   const [prevProps, setPrevProps] = useState({
-    initialSearch,
-    initialCategory,
-    initialLocation,
-    initialSort,
+    category: initialCategory || "All",
+    sort: initialSort || "recommended",
   });
 
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync category and sort if URL props change outside
   if (
-    prevProps.initialSearch !== initialSearch ||
-    prevProps.initialCategory !== initialCategory ||
-    prevProps.initialLocation !== initialLocation ||
-    prevProps.initialSort !== initialSort
+    prevProps.category !== (initialCategory || "All") ||
+    prevProps.sort !== (initialSort || "recommended")
   ) {
-    setPrevProps({ initialSearch, initialCategory, initialLocation, initialSort });
+    setPrevProps({
+      category: initialCategory || "All",
+      sort: initialSort || "recommended",
+    });
     setCategory(initialCategory || "All");
-    setLocation(initialLocation);
     setSort(initialSort || "recommended");
-    if (initialSearch !== search) {
-      setSearch(initialSearch);
-    }
   }
 
-  // Timer refs for debouncing typing
-  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const locationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Sync text inputs with URL when user navigates (e.g. Navbar click, Browser Back, Reset Button)
+  useEffect(() => {
+    if (document.activeElement !== searchInputRef.current && searchInputRef.current) {
+      searchInputRef.current.value = initialSearch;
+    }
+  }, [initialSearch]);
 
-  // Smooth, non-blocking URL update
-  const navigateWithParams = (params: URLSearchParams) => {
+  useEffect(() => {
+    if (document.activeElement !== locationInputRef.current && locationInputRef.current) {
+      locationInputRef.current.value = initialLocation;
+    }
+  }, [initialLocation]);
+
+  // Clean timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
+
+  // Update URL params smoothly
+  const applyFilters = (customCategory?: string, customSort?: string) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    const currentSearch = searchInputRef.current?.value.trim() || "";
+    const currentLocation = locationInputRef.current?.value.trim() || "";
+    const activeCategory = customCategory !== undefined ? customCategory : category;
+    const activeSort = customSort !== undefined ? customSort : sort;
+
+    const params = new URLSearchParams();
+    if (currentSearch) params.set("search", currentSearch);
+    if (activeCategory && activeCategory !== "All" && activeCategory !== "All Categories") {
+      params.set("category", activeCategory);
+    }
+    if (currentLocation) params.set("location", currentLocation);
+    if (activeSort && activeSort !== "recommended") {
+      params.set("sort", activeSort);
+    }
+
     const queryString = params.toString();
     startTransition(() => {
       router.replace(queryString ? `/services?${queryString}` : "/services", {
@@ -94,69 +126,29 @@ export default function ServiceFilters({
     });
   };
 
-  // 1. Live Instant Search as user types (Debounced 300ms)
-  const handleLiveSearch = (value: string) => {
-    setSearch(value);
-
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-
-    searchTimerRef.current = setTimeout(() => {
-      const params = new URLSearchParams(window.location.search);
-      if (value.trim()) {
-        params.set("search", value.trim());
-      } else {
-        params.delete("search");
-      }
-      navigateWithParams(params);
-    }, 300);
+  // 1. Live Debounce Search (When typing and pausing without pressing Enter)
+  const handleTypingDebounce = () => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      applyFilters();
+    }, 450);
   };
 
-  // 2. Live Instant Location as user types (Debounced 300ms)
-  const handleLiveLocation = (value: string) => {
-    setLocation(value);
-
-    if (locationTimerRef.current) clearTimeout(locationTimerRef.current);
-
-    locationTimerRef.current = setTimeout(() => {
-      const params = new URLSearchParams(window.location.search);
-      if (value.trim()) {
-        params.set("location", value.trim());
-      } else {
-        params.delete("location");
-      }
-      navigateWithParams(params);
-    }, 300);
-  };
-
-  // 3. Immediate handler for Dropdowns & Quick Pills
-  const handleFilterChange = (name: string, value: string) => {
-    const params = new URLSearchParams(window.location.search);
-
-    if (value && value !== "All" && value !== "All Categories" && value !== "recommended") {
-      params.set(name, value);
-    } else {
-      params.delete(name);
-    }
-
-    navigateWithParams(params);
-  };
-
-  // 4. Form Submit handler (Enter key or Search Button click)
+  // 2. Immediate Form Submit (When pressing Enter or clicking Search button)
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    applyFilters();
+  };
 
-    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    if (locationTimerRef.current) clearTimeout(locationTimerRef.current);
+  // 3. Dropdown & Quick Category Pills Click
+  const handleCategoryChange = (selectedCategory: string) => {
+    setCategory(selectedCategory);
+    applyFilters(selectedCategory, undefined);
+  };
 
-    const params = new URLSearchParams(window.location.search);
-
-    if (search.trim()) params.set("search", search.trim());
-    else params.delete("search");
-
-    if (location.trim()) params.set("location", location.trim());
-    else params.delete("location");
-
-    navigateWithParams(params);
+  const handleSortChange = (selectedSort: string) => {
+    setSort(selectedSort);
+    applyFilters(undefined, selectedSort);
   };
 
   const currentCategoryLabel =
@@ -165,7 +157,7 @@ export default function ServiceFilters({
       : category;
 
   const currentSortLabel =
-    SORT_OPTIONS.find((s) => s.value === sort)?.label || "Top Featured";
+    SORT_OPTIONS.find((option) => option.value === sort)?.label || "Top Featured";
 
   return (
     <form
@@ -175,14 +167,15 @@ export default function ServiceFilters({
       {/* Main Controls Row */}
       <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-12 lg:gap-3 items-center">
         
-        {/* 1. Live Search Input */}
+        {/* 1. Search Input */}
         <div className="relative sm:col-span-1 lg:col-span-3">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
+            ref={searchInputRef}
             type="text"
             name="searchField"
-            value={search}
-            onChange={(e) => handleLiveSearch(e.target.value)}
+            defaultValue={initialSearch}
+            onChange={handleTypingDebounce}
             placeholder="Search vendors or keyword..."
             autoComplete="off"
             className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 pl-10 pr-3 text-xs sm:text-sm text-stone-800 placeholder-stone-400 outline-none transition focus:border-[#844353] focus:bg-white"
@@ -193,38 +186,38 @@ export default function ServiceFilters({
         <div className="sm:col-span-1 lg:col-span-3">
           <Select
             value={!category || category === "All" ? "All Categories" : category}
-            onValueChange={(val) => {
-              if (!val) return;
-              const newCat = val === "All Categories" ? "All" : val;
-              setCategory(newCat);
-              handleFilterChange("category", newCat);
+            onValueChange={(value) => {
+              if (!value) return;
+              const nextCategory = value === "All Categories" ? "All" : value;
+              handleCategoryChange(nextCategory);
             }}
           >
             <SelectTrigger className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 px-3.5 text-xs sm:text-sm text-stone-800 transition hover:border-[#844353] focus-visible:border-[#844353] focus-visible:ring-0 flex items-center justify-between cursor-pointer">
               <span className="truncate">{currentCategoryLabel}</span>
             </SelectTrigger>
             <SelectContent className="rounded-2xl border border-stone-200/90 bg-white p-1.5 shadow-xl min-w-60">
-              {ALL_CATEGORIES.map((cat) => (
+              {ALL_CATEGORIES.map((categoryOption) => (
                 <SelectItem
-                  key={cat}
-                  value={cat}
+                  key={categoryOption}
+                  value={categoryOption}
                   className="rounded-xl px-3 py-2.5 text-xs sm:text-sm text-stone-700 cursor-pointer focus:bg-[#FAF6F7] focus:text-[#844353]"
                 >
-                  {cat}
+                  {categoryOption}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {/* 3. Live Location Input */}
+        {/* 3. Location Input */}
         <div className="relative sm:col-span-1 lg:col-span-3">
           <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
+            ref={locationInputRef}
             type="text"
             name="locationField"
-            value={location}
-            onChange={(e) => handleLiveLocation(e.target.value)}
+            defaultValue={initialLocation}
+            onChange={handleTypingDebounce}
             placeholder="e.g. Austin, New York..."
             autoComplete="off"
             className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 pl-10 pr-3 text-xs sm:text-sm text-stone-800 placeholder-stone-400 outline-none transition focus:border-[#844353] focus:bg-white"
@@ -236,10 +229,9 @@ export default function ServiceFilters({
           <div className="flex-1">
             <Select
               value={sort}
-              onValueChange={(val) => {
-                if (!val) return;
-                setSort(val);
-                handleFilterChange("sort", val);
+              onValueChange={(selectedSort) => {
+                if (!selectedSort) return;
+                handleSortChange(selectedSort);
               }}
             >
               <SelectTrigger className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 px-3 text-xs sm:text-sm text-stone-800 transition hover:border-[#844353] focus-visible:border-[#844353] focus-visible:ring-0 flex items-center justify-between cursor-pointer">
@@ -249,13 +241,13 @@ export default function ServiceFilters({
                 </div>
               </SelectTrigger>
               <SelectContent className="rounded-2xl border border-stone-200/90 bg-white p-1.5 shadow-xl min-w-52.5">
-                {SORT_OPTIONS.map((opt) => (
+                {SORT_OPTIONS.map((option) => (
                   <SelectItem
-                    key={opt.value}
-                    value={opt.value}
+                    key={option.value}
+                    value={option.value}
                     className="rounded-xl px-3 py-2.5 text-xs sm:text-sm text-stone-700 cursor-pointer focus:bg-[#FAF6F7] focus:text-[#844353]"
                   >
-                    {opt.label}
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -265,9 +257,14 @@ export default function ServiceFilters({
           {/* Form Submit Button */}
           <button
             type="submit"
-            className="h-11 px-4 sm:px-5 rounded-xl bg-[#844353] text-xs font-semibold text-white shadow-2xs transition hover:bg-[#723645] flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+            disabled={isPending}
+            className="h-11 px-4 sm:px-5 rounded-xl bg-[#844353] text-xs font-semibold text-white shadow-2xs transition hover:bg-[#723645] flex items-center justify-center gap-1.5 shrink-0 cursor-pointer disabled:opacity-80"
           >
-            <Search className="h-3.5 w-3.5" />
+            {isPending ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Search className="h-3.5 w-3.5" />
+            )}
             <span>Search</span>
           </button>
         </div>
@@ -289,9 +286,8 @@ export default function ServiceFilters({
               key={tab.label}
               type="button"
               onClick={() => {
-                const newCat = tab.value === "All" ? "All" : tab.value;
-                setCategory(newCat);
-                handleFilterChange("category", newCat);
+                const nextCategory = tab.value === "All" ? "All" : tab.value;
+                handleCategoryChange(nextCategory);
               }}
               className={`rounded-full px-3.5 py-1 text-xs font-medium transition-all cursor-pointer ${
                 isActive

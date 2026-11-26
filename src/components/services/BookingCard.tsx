@@ -11,6 +11,7 @@ import {
   Store,
   ShieldAlert,
   CalendarCheck,
+  Loader2,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -36,8 +37,10 @@ export default function BookingCard({
   const [message, setMessage] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isBooked, setIsBooked] = useState(isAlreadyBooked);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const priceNumber = Number(service.price) || 0;
+  const serviceId = service._id || service.id || "";
   const today = new Date().toISOString().split("T")[0];
 
   // Check if current user is the owner of this service
@@ -45,66 +48,66 @@ export default function BookingCard({
     currentUser?.id &&
       service.vendorId &&
       String(currentUser.id) === String(service.vendorId)
-  ) || Boolean(
-    currentUser?.email &&
-      service.vendorEmail &&
-      currentUser.email.toLowerCase() === service.vendorEmail.toLowerCase()
   );
 
   // Check if current user is an admin or vendor
   const isAdmin = currentUser?.role?.toLowerCase() === "admin";
   const isVendor = currentUser?.role?.toLowerCase() === "vendor";
 
-  // Check if service is approved and active
+  // Check if service is approved, active, and accepting bookings
   const serviceStatus = (service.status || "Pending").toLowerCase();
+  const isPausedByVendor = service.isAvailable === false;
   const isServiceAvailable =
-    serviceStatus === "active" || serviceStatus === "approved";
+    (serviceStatus === "active" || serviceStatus === "approved") &&
+    !isPausedByVendor;
 
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
 
     if (!currentUser) {
-      router.push(`/signin?redirectTo=/services/${service._id || service.id}`);
+      router.push(`/signin?redirectTo=/services/${serviceId}`);
       return;
     }
 
     if (currentUser?.role?.toLowerCase() === "customer") {
-      const booking = {
-        serviceId: (service._id || service.id) as string,
-        serviceName: service.serviceName,
-        servicePrice: service.price,
-        serviceCategory: service.category,
-        serviceImage: service.images?.[0] || "",
-        vendorId: service.vendorId,
-        vendorEmail: service.vendorEmail,
-        customerId: currentUser?.id,
-        customerName: currentUser?.name || "Customer",
-        customerEmail: currentUser?.email,
-        eventDate,
-        eventLocation,
-        message,
-        status: "Pending",
-      };
+      setIsSubmitting(true);
+      try {
+        const booking = {
+          serviceId,
+          serviceName: service.serviceName,
+          servicePrice: service.price,
+          serviceCategory: service.category,
+          serviceImage: service.images?.[0] || "",
+          eventDate,
+          eventLocation,
+          message,
+        };
 
-      const result = await bookingToAService(booking);
+        const result = await bookingToAService(booking);
 
-      if (result?.insertedId) {
-        setIsBooked(true);
-        toast.add({
-          title: "Booking Requested!",
-          description: "Your booking request was submitted successfully.",
-          type: "success",
-        });
-        router.push("/dashboard/customer/my-bookings");
-      } else {
-        const error = result?.message || "Failed to submit booking";
-        setErrorMsg(error);
-        toast.add({
-          title: "Booking Failed",
-          description: error,
-          type: "error",
-        });
+        if (result?.insertedId) {
+          setIsBooked(true);
+          toast.add({
+            title: "Booking Requested!",
+            description: "Your booking request was submitted successfully.",
+            type: "success",
+          });
+          router.push("/dashboard/customer/my-bookings");
+        } else {
+          const error = result?.message || "Failed to submit booking";
+          setErrorMsg(error);
+          toast.add({
+            title: "Booking Failed",
+            description: error,
+            type: "error",
+          });
+        }
+      } catch (error) {
+        console.error("Booking submission error:", error);
+        setErrorMsg("Failed to connect to the server. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
@@ -157,7 +160,7 @@ export default function BookingCard({
           </div>
           <Link
             href="/dashboard/admin"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white py-2.5 text-xs font-semibold shadow-xs transition-colors"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#844353] hover:bg-[#6e3745] text-white py-2.5 text-xs font-semibold shadow-xs transition-colors"
           >
             <span>Go to Admin Dashboard</span>
           </Link>
@@ -181,20 +184,24 @@ export default function BookingCard({
           </div>
         </div>
       ) : !isServiceAvailable ? (
-        /*  Service is not yet approved/active */
+        /*  Service is not yet approved/active or paused by vendor */
         <div className="py-4 text-center space-y-4">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100 text-stone-600 border border-stone-200">
             <Clock className="h-7 w-7" />
           </div>
           <div>
             <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2.5 py-0.5 text-[11px] font-semibold text-[#844353] border border-rose-200">
-              Status: {service.status || "Pending Review"}
+              {isPausedByVendor
+                ? "Status: Paused by Vendor"
+                : `Status: ${service.status || "Pending Review"}`}
             </span>
             <h3 className="mt-2 font-serif text-lg font-bold text-stone-900">
               Not Available for Booking
             </h3>
             <p className="mt-1.5 text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
-              Only approved and active services can accept booking requests. This service is currently under review by our curation team.
+              {isPausedByVendor
+                ? "This service has been temporarily paused by the vendor and is not accepting bookings right now."
+                : "Only approved and active services can accept booking requests. This service is currently under review by our curation team."}
             </p>
           </div>
           <Link
@@ -330,10 +337,20 @@ export default function BookingCard({
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#844353] hover:bg-[#6e3745] text-white py-3 text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#844353] hover:bg-[#6e3745] text-white py-3 text-xs font-semibold shadow-xs transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Send className="h-3.5 w-3.5" />
-              <span>Request Booking</span>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="h-3.5 w-3.5" />
+                  <span>Request Booking</span>
+                </>
+              )}
             </button>
           </form>
 

@@ -29,15 +29,20 @@ export default async function ServiceDetailsPage({ params }: Props) {
   if (!session?.user) {
     redirect(`/signin?redirectTo=/services/${id}`);
   }
+  if (session.user.isBlocked) {
+    redirect("/unauthorized");
+  }
     
   const service = await getServiceById(id);
 
   let isAlreadyBooked = false;
-  if (session?.user?.email) {
-    const userBookings = await getBookings(`email=${encodeURIComponent(session.user.email)}`);
+  if (session?.user?.role?.toLowerCase() === "customer") {
+    const userBookings = await getBookings();
     if (Array.isArray(userBookings)) {
       isAlreadyBooked = userBookings.some(
-        (b) => b.serviceId === id && (b.status === "Pending" || b.status === "Accepted")
+        (bookingItem) =>
+          bookingItem.serviceId === id &&
+          (bookingItem.status === "Pending" || bookingItem.status === "Accepted")
       );
     }
   }

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowRight, MapPin, Heart } from "lucide-react";
+import { ArrowRight, MapPin, Crown } from "lucide-react";
 import { IVendorService } from "@/types";
 import { useSession } from "@/lib/auth-client";
 
@@ -13,9 +13,10 @@ interface ServiceCardProps {
 
 export default function ServiceCard({ service }: ServiceCardProps) {
   const router = useRouter();
-  const [isFavorite, setIsFavorite] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
   const user = session?.user;
+
+  const isPremiumVendor = Boolean(service.isPremium);
 
   const fallbackImage =
     "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&q=80&w=800";
@@ -23,11 +24,11 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const serviceId = service._id || service.id || "";
   const priceNumber = Number(service.price) || 0;
 
-  const vendorName = service.vendorName || "Hearth & Vine";
-  const companyName = service.businessName || service.vendorSubtitle || "Wedding Specialists";
+  const vendorName = service.vendorName || "Verified Vendor";
+  const companyName = service.businessName || "Wedding Specialists";
 
   const handleViewServiceDetails = (id: string) => {
-    if (!user) {
+    if (!isPending && !user) {
       router.push(`/signin?redirectTo=/services/${id}`);
       return;
     }
@@ -54,23 +55,13 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             {service.category || "Wedding"}
           </span>
 
-          {/* Top-Right Favorite / Wishlist Button */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsFavorite(!isFavorite);
-            }}
-            aria-label="Add to favorites"
-            className="absolute top-2.5 right-2.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/60 bg-white/90 text-stone-600 shadow-2xs backdrop-blur-xs transition-all hover:scale-110 hover:bg-white hover:text-rose-600 cursor-pointer"
-          >
-            <Heart
-              className={`h-3.5 w-3.5 transition-colors ${
-                isFavorite ? "fill-rose-500 text-rose-500" : "text-stone-600"
-              }`}
-            />
-          </button>
+          {/* Top-Right Premium Vendor Badge */}
+          {isPremiumVendor && (
+            <span className="absolute top-2.5 right-2.5 inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50/95 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 shadow-2xs backdrop-blur-xs">
+              <Crown className="h-3 w-3 text-amber-600 fill-amber-500" />
+              <span>Premium</span>
+            </span>
+          )}
 
           {/* Bottom Gradient Overlay: Location & Price Badge */}
           <div className="absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-black/75 via-black/35 to-transparent flex items-end justify-between px-3 pb-1.5 text-white/90">
