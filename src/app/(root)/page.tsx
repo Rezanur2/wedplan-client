@@ -6,6 +6,8 @@ import HowItWorks from "@/components/home/HowItWorks";
 import { getServices } from "@/lib/api/services";
 import { IVendorService } from "@/types";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "WedPlan | Curated Wedding Planning Platform",
   description: "Discover trusted wedding professionals, explore beautiful services, and bring your dream celebration to life.",

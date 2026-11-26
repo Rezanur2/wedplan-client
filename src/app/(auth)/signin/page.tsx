@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import type { Metadata } from "next";
 import AuthSidebar from "@/components/auth/AuthSidebar";
 import SignInForm from "@/components/auth/SignInForm";
@@ -29,7 +29,9 @@ export default function SignInPage() {
 
         {/* Right Column: Sign In Form (Client Component) */}
         <div className="flex flex-col justify-center p-6 sm:p-10 lg:col-span-7 lg:p-12">
-          <SignInForm />
+          <Suspense fallback={<div className="h-96 animate-pulse rounded-2xl bg-stone-100" />}>
+            <SignInForm />
+          </Suspense>
         </div>
       </div>
     </div>

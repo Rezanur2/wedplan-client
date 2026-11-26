@@ -122,6 +122,12 @@ const menuItemsByRole: Record<TUserRole, IMenuItem[]> = {
       url: "/dashboard/admin/transactions",
       icon: Receipt,
     },
+    {
+      id: "admin-profile",
+      name: "Profile Settings",
+      url: "/dashboard/admin/profile",
+      icon: SlidersHorizontal,
+    },
   ],
 };
 

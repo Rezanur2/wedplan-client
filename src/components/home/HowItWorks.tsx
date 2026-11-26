@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { Search, CalendarCheck, HeartHandshake, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSession } from "@/lib/auth-client";
 
 interface StepItem {
   number: string;
@@ -34,6 +35,8 @@ const STEPS: StepItem[] = [
 ];
 
 export default function HowItWorks() {
+  const { data: session, isPending } = useSession();
+
   return (
     <section className="py-16 sm:py-24 bg-white/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -122,12 +125,14 @@ export default function HowItWorks() {
               <span>Explore Wedding Services</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link
-              href="/signup?role=vendor"
-              className="inline-flex items-center rounded-xl border border-stone-300 bg-white px-6 py-3 text-xs sm:text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
-            >
-              List Your Services
-            </Link>
+            {!isPending && !session?.user && (
+              <Link
+                href="/signup?role=vendor"
+                className="inline-flex items-center rounded-xl border border-stone-300 bg-white px-6 py-3 text-xs sm:text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
+              >
+                List Your Services
+              </Link>
+            )}
           </div>
         </motion.div>
       </div>

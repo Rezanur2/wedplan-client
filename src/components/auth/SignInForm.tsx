@@ -27,6 +27,7 @@ export default function SignInForm() {
     const formData = new FormData(e.currentTarget);
     const email = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "").trim();
+    const rememberMe = formData.get("remember") === "on";
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email || !emailRegex.test(email)) {
@@ -48,7 +49,7 @@ export default function SignInForm() {
       const { data, error } = await authClient.signIn.email({
           email: email,
           password: password,
-          rememberMe: true,
+          rememberMe: rememberMe,
       });
       if (error) {
         const msg = error.message ?? "Invalid email or password.";

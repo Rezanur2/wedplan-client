@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, SlidersHorizontal, Loader2 } from "lucide-react";
+import { Search, MapPin, SlidersHorizontal, Loader2, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -54,40 +54,35 @@ export default function ServiceFilters({
 
   const [category, setCategory] = useState(initialCategory || "All");
   const [sort, setSort] = useState(initialSort || "recommended");
+  const [searchText, setSearchText] = useState(initialSearch || "");
+  const [locationText, setLocationText] = useState(initialLocation || "");
   const [prevProps, setPrevProps] = useState({
     category: initialCategory || "All",
     sort: initialSort || "recommended",
+    search: initialSearch || "",
+    location: initialLocation || "",
   });
 
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const locationInputRef = useRef<HTMLInputElement>(null);
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Sync category and sort if URL props change outside
+  // Sync filters if URL props change outside
   if (
     prevProps.category !== (initialCategory || "All") ||
-    prevProps.sort !== (initialSort || "recommended")
+    prevProps.sort !== (initialSort || "recommended") ||
+    prevProps.search !== (initialSearch || "") ||
+    prevProps.location !== (initialLocation || "")
   ) {
     setPrevProps({
       category: initialCategory || "All",
       sort: initialSort || "recommended",
+      search: initialSearch || "",
+      location: initialLocation || "",
     });
     setCategory(initialCategory || "All");
     setSort(initialSort || "recommended");
+    setSearchText(initialSearch || "");
+    setLocationText(initialLocation || "");
   }
-
-  // Sync text inputs with URL when user navigates (e.g. Navbar click, Browser Back, Reset Button)
-  useEffect(() => {
-    if (document.activeElement !== searchInputRef.current && searchInputRef.current) {
-      searchInputRef.current.value = initialSearch;
-    }
-  }, [initialSearch]);
-
-  useEffect(() => {
-    if (document.activeElement !== locationInputRef.current && locationInputRef.current) {
-      locationInputRef.current.value = initialLocation;
-    }
-  }, [initialLocation]);
 
   // Clean timer on unmount
   useEffect(() => {
@@ -97,14 +92,19 @@ export default function ServiceFilters({
   }, []);
 
   // Update URL params smoothly
-  const applyFilters = (customCategory?: string, customSort?: string) => {
+  const applyFilters = (
+    customCategory?: string,
+    customSort?: string,
+    customSearch?: string,
+    customLocation?: string
+  ) => {
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
       debounceTimerRef.current = null;
     }
 
-    const currentSearch = searchInputRef.current?.value.trim() || "";
-    const currentLocation = locationInputRef.current?.value.trim() || "";
+    const currentSearch = (customSearch !== undefined ? customSearch : searchText).trim();
+    const currentLocation = (customLocation !== undefined ? customLocation : locationText).trim();
     const activeCategory = customCategory !== undefined ? customCategory : category;
     const activeSort = customSort !== undefined ? customSort : sort;
 
@@ -127,10 +127,10 @@ export default function ServiceFilters({
   };
 
   // 1. Live Debounce Search (When typing and pausing without pressing Enter)
-  const handleTypingDebounce = () => {
+  const scheduleTypingFilter = (nextSearch: string, nextLocation: string) => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     debounceTimerRef.current = setTimeout(() => {
-      applyFilters();
+      applyFilters(undefined, undefined, nextSearch, nextLocation);
     }, 450);
   };
 
@@ -171,15 +171,31 @@ export default function ServiceFilters({
         <div className="relative sm:col-span-1 lg:col-span-3">
           <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
-            ref={searchInputRef}
             type="text"
             name="searchField"
-            defaultValue={initialSearch}
-            onChange={handleTypingDebounce}
+            value={searchText}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setSearchText(nextValue);
+              scheduleTypingFilter(nextValue, locationText);
+            }}
             placeholder="Search vendors or keyword..."
             autoComplete="off"
-            className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 pl-10 pr-3 text-xs sm:text-sm text-stone-800 placeholder-stone-400 outline-none transition focus:border-[#844353] focus:bg-white"
+            className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 pl-10 pr-9 text-xs sm:text-sm text-stone-800 placeholder-stone-400 outline-none transition focus:border-[#844353] focus:bg-white"
           />
+          {searchText && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearchText("");
+                applyFilters(undefined, undefined, "", locationText);
+              }}
+              aria-label="Clear search"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         {/* 2. Category Dropdown */}
@@ -213,15 +229,31 @@ export default function ServiceFilters({
         <div className="relative sm:col-span-1 lg:col-span-3">
           <MapPin className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
           <input
-            ref={locationInputRef}
             type="text"
             name="locationField"
-            defaultValue={initialLocation}
-            onChange={handleTypingDebounce}
+            value={locationText}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              setLocationText(nextValue);
+              scheduleTypingFilter(searchText, nextValue);
+            }}
             placeholder="e.g. Austin, New York..."
             autoComplete="off"
-            className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 pl-10 pr-3 text-xs sm:text-sm text-stone-800 placeholder-stone-400 outline-none transition focus:border-[#844353] focus:bg-white"
+            className="w-full h-11 rounded-xl border border-stone-200/90 bg-stone-50/50 pl-10 pr-9 text-xs sm:text-sm text-stone-800 placeholder-stone-400 outline-none transition focus:border-[#844353] focus:bg-white"
           />
+          {locationText && (
+            <button
+              type="button"
+              onClick={() => {
+                setLocationText("");
+                applyFilters(undefined, undefined, searchText, "");
+              }}
+              aria-label="Clear location"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
 
         {/* 4. Sort Dropdown & Search Button */}
