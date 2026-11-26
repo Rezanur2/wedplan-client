@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { IDashboardUser } from "@/types";
 import { authClient } from "@/lib/auth-client";
+import { syncVendorServicesProfile } from "@/lib/actions/users";
 import { uploadImageToImgBB } from "@/lib/uploadImage";
 import { toast } from "@/components/ui/toast";
 import { Input } from "@/components/ui/input";
@@ -90,7 +91,7 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
     try {
       const updatePayload: { name: string; image?: string; businessName?: string } = {
         name: name.trim(),
-        image: imageUrl || undefined,
+        image: imageUrl || "",
       };
 
       if (isVendor && businessName.trim()) {
@@ -106,6 +107,9 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
           type: "error",
         });
       } else {
+        if (isVendor) {
+          await syncVendorServicesProfile();
+        }
         toast.add({
           title: "Profile Updated",
           description: "Your profile information has been saved successfully.",

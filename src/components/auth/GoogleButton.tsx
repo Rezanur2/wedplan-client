@@ -20,7 +20,7 @@ export default function GoogleButton({ label, onClick, role, callbackURL }: Goog
       setLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: callbackURL || "/?auth=google_success",
+        callbackURL: callbackURL || "/dashboard",
         ...(role && {
           additionalData: {
             role: role,

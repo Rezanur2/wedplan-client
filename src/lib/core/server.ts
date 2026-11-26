@@ -6,17 +6,25 @@ import { redirect } from "next/navigation";
 export const getSession = async () => {
     "use server";
     const session = await auth.api.getSession({
-        headers: await headers()
+        headers: await headers(),
+        query: { disableCookieCache: true },
     })
     return session;
 }
 
 export const getToken = async () => {
     const session = await getSession();
-    if (!session || !session.session?.token) {
+    if (!session) {
+        redirect("/signin");
+    }
+    const requestHeaders = await headers();
+    const tokenResponse = await auth.api.getToken({
+        headers: requestHeaders,
+    });
+    if (!tokenResponse?.token) {
         redirect("/unauthorized");
     }
-    return session.session.token;
+    return tokenResponse.token;
 }
 
 export const authFetch = async (api: string) => {
@@ -24,7 +32,8 @@ export const authFetch = async (api: string) => {
     const res = await fetch(api, {
         headers: {
             authorization: `Bearer ${token}`
-        }
+        },
+        cache: "no-store",
     })
     return res;
 }
@@ -39,15 +48,19 @@ export const protectedMutation = async (api: string, method: string, data?: unkn
         },
         body: data ? JSON.stringify(data) : null
     })
-    if (res.status === 401 || res.status === 403) {
-        redirect("/unauthorized");
+    if (res.status === 401) {
+        redirect("/signin");
     }
     return res;
 }
 
 export const requireRole = async (role: string) => {
     const session = await getSession();
-    if (!session || session?.user.role !== role) {
+    if (!session?.user) {
+        redirect("/signin");
+    }
+    const userRole = (session.user.role || "").toLowerCase();
+    if (userRole !== role.toLowerCase() || session?.user.isBlocked) {
         redirect("/unauthorized");
     }
     return session;

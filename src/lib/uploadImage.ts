@@ -3,8 +3,7 @@ export async function uploadImageToImgBB(file: File): Promise<string> {
   const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
   if (!apiKey) {
-    console.warn("NEXT_PUBLIC_IMGBB_API_KEY is not defined in .env. Using fallback object URL.");
-    return URL.createObjectURL(file);
+    throw new Error("ImgBB API key is not configured.");
   }
 
   const formData = new FormData();

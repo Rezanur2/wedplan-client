@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Camera, X, Loader2 } from "lucide-react";
 import { uploadImageToImgBB } from "@/lib/uploadImage";
+import { toast } from "@/components/ui/toast";
 
 interface ProfileImageUploadProps {
   name: string;
@@ -32,6 +33,11 @@ export default function ProfileImageUpload({
       onFileChange(file.name);
     } catch (err) {
       console.error("Profile image upload failed:", err);
+      toast.add({
+        title: "Upload Failed",
+        description: "Failed to upload profile photo. Please try again.",
+        type: "error",
+      });
     } finally {
       setIsUploading(false);
       e.target.value = "";

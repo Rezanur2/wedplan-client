@@ -12,6 +12,7 @@ import {
   ArrowRight,
   ArrowLeft,
   AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,17 +23,22 @@ import { authClient } from "@/lib/auth-client";
 import { toast } from "../ui/toast";
 import { useRouter } from "next/navigation";
 
-export default function SignUpForm() {
+interface SignUpFormProps {
+  initialRole?: "customer" | "vendor";
+}
+
+export default function SignUpForm({ initialRole = "customer" }: SignUpFormProps) {
 
   const router = useRouter();
 
-  const [role, setRole] = useState<"customer" | "vendor">("customer");
+  const [role, setRole] = useState<"customer" | "vendor">(initialRole);
   const [name, setName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Password validation rules
@@ -64,10 +70,8 @@ export default function SignUpForm() {
     }
     setPasswordError(null);
 
-    const data = Object.fromEntries(formData.entries());
-    console.log("Sign Up Form Data:", data);
-
     const formElement = e.currentTarget;
+    setIsSubmitting(true);
 
     try {
       const { data, error } = await authClient.signUp.email({
@@ -102,6 +106,8 @@ export default function SignUpForm() {
       router.push("/signin");
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -355,10 +361,20 @@ export default function SignUpForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#844353] py-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#723645] active:scale-[0.99] cursor-pointer"
+          disabled={isSubmitting}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#844353] py-2.5 text-xs font-semibold text-white shadow-xs transition-all hover:bg-[#723645] active:scale-[0.99] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Create Account
-          <ArrowRight className="h-3.5 w-3.5" />
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Creating Account...</span>
+            </>
+          ) : (
+            <>
+              <span>Create Account</span>
+              <ArrowRight className="h-3.5 w-3.5" />
+            </>
+          )}
         </button>
       </form>
 

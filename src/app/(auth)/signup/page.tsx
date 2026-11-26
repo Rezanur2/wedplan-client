@@ -8,7 +8,14 @@ export const metadata: Metadata = {
   description: "Join WedPlan to plan your wedding or grow your wedding business.",
 };
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string }>;
+}) {
+  const { role } = await searchParams;
+  const initialRole = role?.toLowerCase() === "vendor" ? "vendor" : "customer";
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#FAF6F7] p-4 sm:p-6 lg:p-8">
       <div className="grid w-full max-w-5xl items-stretch overflow-hidden rounded-3xl border border-stone-200/80 bg-white shadow-2xl lg:grid-cols-12">
@@ -30,7 +37,7 @@ export default function SignUpPage() {
 
         {/* Right Column: Sign Up Form */}
         <div className="flex flex-col justify-center p-6 sm:p-10 lg:col-span-7 lg:p-12">
-          <SignUpForm />
+          <SignUpForm initialRole={initialRole} />
         </div>
       </div>
     </div>
