@@ -32,8 +32,12 @@ export default function UserDetailsModal({
 }: UserDetailsModalProps) {
   if (!selectedUser) return null;
 
+  const userId = selectedUser._id || selectedUser.id || "";
   const userRole = (selectedUser.role || "customer").toLowerCase();
   const isUserBlocked = Boolean(selectedUser.isBlocked);
+  const isVendorPremium = Boolean(
+    selectedUser.premium || selectedUser.subscriptionPlan?.toLowerCase() === "premium"
+  );
   const userInitials = (selectedUser.name || "U").slice(0, 2).toUpperCase();
   const registrationDate = selectedUser.createdAt
     ? new Date(selectedUser.createdAt).toLocaleDateString("en-US", {
@@ -119,9 +123,9 @@ export default function UserDetailsModal({
               </div>
               <p
                 className="font-mono text-stone-700 text-[11px] truncate"
-                title={selectedUser.id || selectedUser._id || ""}
+                title={userId}
               >
-                {selectedUser.id || selectedUser._id || "N/A"}
+                {userId || "N/A"}
               </p>
             </div>
 
@@ -151,9 +155,13 @@ export default function UserDetailsModal({
               </div>
               <div className="flex items-center justify-between text-xs">
                 <span className="text-stone-500">Subscription Tier:</span>
-                <span className="inline-flex items-center gap-1 font-semibold text-amber-700 capitalize">
-                  <Crown className="h-3 w-3 text-amber-600" />
-                  {selectedUser.subscriptionPlan || "Free Plan"}
+                <span
+                  className={`inline-flex items-center gap-1 font-semibold capitalize ${
+                    isVendorPremium ? "text-amber-700" : "text-stone-600"
+                  }`}
+                >
+                  {isVendorPremium && <Crown className="h-3 w-3 text-amber-600" />}
+                  {isVendorPremium ? "Premium" : "Free Plan"}
                 </span>
               </div>
             </div>

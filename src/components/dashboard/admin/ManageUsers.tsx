@@ -15,6 +15,7 @@ import {
   X,
   RotateCcw,
   Crown,
+  Loader2,
 } from "lucide-react";
 import { IDashboardUser, TUserRole } from "@/types";
 import { toast } from "@/components/ui/toast";
@@ -26,37 +27,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import UserDetailsModal from "./UserDetailsModal";
-import { updateUserRole } from "@/lib/actions/users";
+import { updateUserRole, toggleUserBlock } from "@/lib/actions/users";
 
 interface ManageUsersProps {
   users?: IDashboardUser[];
+  currentUserId?: string;
 }
 
-export default function ManageUsers({ users = [] }: ManageUsersProps) {
+export default function ManageUsers({ users = [], currentUserId }: ManageUsersProps) {
+  const getUserId = (user: IDashboardUser) => user._id || user.id || "";
+
+  const [userList, setUserList] = useState<IDashboardUser[]>(users);
   const [roles, setRoles] = useState<Record<string, TUserRole>>(() =>
-    Object.fromEntries(users.map((user) => [user._id || user.id || "", (user.role || "customer") as TUserRole]))
+    Object.fromEntries(users.map((user) => [getUserId(user), (user.role || "customer") as TUserRole]))
   );
+  const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedUser, setSelectedUser] = useState<IDashboardUser | null>(null);
 
   // User counts by role and status
-  const totalUsersCount = users.length;
-  const customerCount = users.filter(
-    (user) => (user.role || "customer").toLowerCase() === "customer"
+  const totalUsersCount = userList.length;
+  const customerCount = userList.filter(
+    (user) => (roles[getUserId(user)] || user.role || "customer").toLowerCase() === "customer"
   ).length;
-  const vendorCount = users.filter(
-    (user) => (user.role || "").toLowerCase() === "vendor"
+  const vendorCount = userList.filter(
+    (user) => (roles[getUserId(user)] || user.role || "").toLowerCase() === "vendor"
   ).length;
-  const adminCount = users.filter(
-    (user) => (user.role || "").toLowerCase() === "admin"
+  const adminCount = userList.filter(
+    (user) => (roles[getUserId(user)] || user.role || "").toLowerCase() === "admin"
   ).length;
-  const blockedCount = users.filter((user) => Boolean(user.isBlocked)).length;
+  const blockedCount = userList.filter((user) => Boolean(user.isBlocked)).length;
 
   // Filtered users list
-  const filteredUsers = users.filter((user) => {
-    const role = (user.role || "customer").toLowerCase();
+  const filteredUsers = userList.filter((user) => {
+    const role = (roles[getUserId(user)] || user.role || "customer").toLowerCase();
     const isBlocked = Boolean(user.isBlocked);
     const searchQuery = search.toLowerCase().trim();
 
@@ -80,23 +86,44 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
     return true;
   });
 
-  // Handlers for user to connect backend logic later
+  // Handlers for user role and block status
   const handleRoleChange = async (user: IDashboardUser, role: TUserRole) => {
-    const userId = user._id || user.id || "";
-    setRoles((prev) => ({ ...prev, [userId]: role }));
-    const res = await updateUserRole(userId, role);
+    const userId = getUserId(user);
+    const previousRole = roles[userId] || (user.role as TUserRole) || "customer";
+    setRoles((previousRoles) => ({ ...previousRoles, [userId]: role }));
 
-    if (res?.modifiedCount > 0) {
+    try {
+      const updateResponse = await updateUserRole(userId, role);
+
+      if (updateResponse?.modifiedCount > 0) {
+        toast.add({
+          title: "Role Updated",
+          description: `Assigned ${user.name || "user"} as ${role}.`,
+          type: "success",
+        });
+      } else {
+        setRoles((previousRoles) => ({ ...previousRoles, [userId]: previousRole }));
+        toast.add({
+          title: "Update Failed",
+          description: updateResponse?.message || "Could not update user role.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to update user role:", error);
+      setRoles((previousRoles) => ({ ...previousRoles, [userId]: previousRole }));
       toast.add({
-        title: "Role Change Event",
-        description: `Assigned ${user.name || "user"} as ${role}.`,
-        type: "info",
+        title: "Error",
+        description: "Failed to update user role. Please try again.",
+        type: "error",
       });
     }
   };
 
-  const handleToggleBlock = (user: IDashboardUser) => {
-    const currentRole = (roles[user._id || user.id || ""] || user.role || "customer").toLowerCase();
+  const handleToggleBlock = async (user: IDashboardUser) => {
+    const userId = getUserId(user);
+    const currentRole = (roles[userId] || user.role || "customer").toLowerCase();
+
     if (currentRole === "admin") {
       toast.add({
         title: "Action Not Allowed",
@@ -107,16 +134,90 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
     }
 
     const willBlock = !user.isBlocked;
-    toast.add({
-      title: willBlock ? "Block User Event" : "Unblock User Event",
-      description: `${willBlock ? "Blocking" : "Unblocking"} ${user.name || "user"}. (Ready for logic)`,
-      type: "info",
+    setLoadingUserId(userId);
+
+    // Optimistically update the UI
+    setUserList((previousUsers) =>
+      previousUsers.map((currentUser) =>
+        getUserId(currentUser) === userId ? { ...currentUser, isBlocked: willBlock } : currentUser
+      )
+    );
+
+    if (selectedUser && getUserId(selectedUser) === userId) {
+      setSelectedUser((previousSelected) =>
+        previousSelected ? { ...previousSelected, isBlocked: willBlock } : null
+      );
+    }
+
+    try {
+      const response = await toggleUserBlock(userId, willBlock);
+
+      if (response?.success) {
+        toast.add({
+          title: willBlock ? "User Blocked" : "User Unblocked",
+          description: `${user.name || "User"} is now ${willBlock ? "blocked" : "active"}.`,
+          type: "success",
+        });
+      } else {
+        // Revert on failure
+        setUserList((previousUsers) =>
+          previousUsers.map((currentUser) =>
+            getUserId(currentUser) === userId ? { ...currentUser, isBlocked: !willBlock } : currentUser
+          )
+        );
+        toast.add({
+          title: "Update Failed",
+          description: response?.message || "Could not update user status.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling block status:", error);
+      // Revert on error
+      setUserList((previousUsers) =>
+        previousUsers.map((currentUser) =>
+          getUserId(currentUser) === userId ? { ...currentUser, isBlocked: !willBlock } : currentUser
+        )
+      );
+      toast.add({
+        title: "Connection Error",
+        description: "Failed to connect to server. Please try again.",
+        type: "error",
+      });
+    } finally {
+      setLoadingUserId(null);
+    }
+  };
+
+  // Helper to format joined date
+  const formatJoinedDate = (createdAt?: string | Date | null) => {
+    if (!createdAt) return "Member";
+    return new Date(createdAt).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
+  };
+
+  // Reusable avatar renderer (defines image / initials fallback once)
+  const renderUserAvatar = (user: IDashboardUser, sizeClass = "h-8 w-8") => {
+    const initials = (user.name || "U").slice(0, 2).toUpperCase();
+    return (
+      <div
+        className={`relative flex ${sizeClass} shrink-0 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-stone-100 font-bold text-xs text-stone-600`}
+      >
+        {user.image ? (
+          <Image src={user.image} alt={user.name || "User"} fill sizes="40px" className="object-cover" />
+        ) : (
+          initials
+        )}
+      </div>
+    );
   };
 
   // Reusable UI helpers for role badge, status badge, and action buttons
   const getRoleBadge = (user: IDashboardUser) => {
-    const role = (roles[user._id || user.id || ""] || user.role || "customer").toLowerCase();
+    const role = (roles[getUserId(user)] || user.role || "customer").toLowerCase();
     const badgeColor =
       role === "admin"
         ? "bg-purple-50 text-purple-700 border-purple-200"
@@ -145,47 +246,58 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
     </span>
   );
 
-  // Role Render Button 
+  // Role Dropdown Selector
   const renderRoleButtons = (user: IDashboardUser) => {
-    const currentRole = roles[user._id || user.id || ""] || user.role || "customer";
-    const role = currentRole.toLowerCase();
+    const userId = getUserId(user);
+    const currentRole = (roles[userId] || user.role || "customer").toLowerCase() as TUserRole;
+    const isCurrentUser = Boolean(currentUserId && userId === currentUserId);
+
     return (
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {role !== "admin" && (
-          <button
-            type="button"
-            onClick={() => handleRoleChange(user, "admin")}
-            className="rounded-lg border border-purple-200 bg-purple-50/70 px-2 py-0.5 text-[10px] font-medium text-purple-700 hover:bg-purple-100 transition cursor-pointer"
+      <Select
+        value={currentRole}
+        disabled={isCurrentUser}
+        onValueChange={(newRole) => {
+          if (newRole && newRole !== currentRole) {
+            handleRoleChange(user, newRole as TUserRole);
+          }
+        }}
+      >
+        <SelectTrigger
+          title={isCurrentUser ? "You cannot change your own role" : "Change user role"}
+          className="h-8 w-32 rounded-lg border border-stone-200 bg-white px-2.5 text-xs capitalize text-stone-700 shadow-2xs hover:border-stone-300 focus-visible:border-[#844353] focus-visible:ring-0 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="rounded-xl border border-stone-200 bg-white p-1 shadow-lg min-w-32">
+          <SelectItem
+            value="customer"
+            className="rounded-lg px-2.5 py-1.5 text-xs text-stone-700 cursor-pointer hover:bg-[#FAF6F7] hover:text-[#844353]"
           >
-            Make Admin
-          </button>
-        )}
-        {role !== "vendor" && (
-          <button
-            type="button"
-            onClick={() => handleRoleChange(user, "vendor")}
-            className="rounded-lg border border-rose-200 bg-rose-50/70 px-2 py-0.5 text-[10px] font-medium text-[#844353] hover:bg-rose-100 transition cursor-pointer"
+            Customer
+          </SelectItem>
+          <SelectItem
+            value="vendor"
+            className="rounded-lg px-2.5 py-1.5 text-xs text-stone-700 cursor-pointer hover:bg-[#FAF6F7] hover:text-[#844353]"
           >
-            Make Vendor
-          </button>
-        )}
-        {role !== "customer" && (
-          <button
-            type="button"
-            onClick={() => handleRoleChange(user, "customer")}
-            className="rounded-lg border border-sky-200 bg-sky-50/70 px-2 py-0.5 text-[10px] font-medium text-sky-700 hover:bg-sky-100 transition cursor-pointer"
+            Vendor
+          </SelectItem>
+          <SelectItem
+            value="admin"
+            className="rounded-lg px-2.5 py-1.5 text-xs text-stone-700 cursor-pointer hover:bg-[#FAF6F7] hover:text-[#844353]"
           >
-            Make Customer
-          </button>
-        )}
-      </div>
+            Admin
+          </SelectItem>
+        </SelectContent>
+      </Select>
     );
   };
 
   const renderActionButtons = (user: IDashboardUser) => {
+    const userId = getUserId(user);
     const isBlocked = Boolean(user.isBlocked);
-    const userRole = (roles[user._id || user.id || ""] || user.role || "customer").toLowerCase();
+    const userRole = (roles[userId] || user.role || "customer").toLowerCase();
     const isAdmin = userRole === "admin";
+    const isSaving = loadingUserId === userId;
 
     return (
       <div className="flex items-center gap-1.5">
@@ -201,14 +313,20 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
         {!isAdmin && (
           <button
             type="button"
+            disabled={isSaving}
             onClick={() => handleToggleBlock(user)}
-            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition cursor-pointer shadow-2xs ${
+            className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition cursor-pointer shadow-2xs disabled:opacity-60 disabled:cursor-not-allowed ${
               isBlocked
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                 : "border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
             }`}
           >
-            {isBlocked ? (
+            {isSaving ? (
+              <>
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : isBlocked ? (
               <>
                 <CheckCircle2 className="h-3 w-3" />
                 <span>Unblock</span>
@@ -243,12 +361,17 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
   return (
     <div className="mx-auto max-w-6xl space-y-6 pb-16">
       {/* 1. Header */}
-      <div>
-        <div className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-          ADMIN / USERS & ACCOUNTS
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-rose-50/80 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#844353] whitespace-nowrap shrink-0 shadow-2xs">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#844353]" />
+            Admin Center • User Management
+          </span>
         </div>
-        <h1 className="mt-1 font-serif text-2xl sm:text-3xl md:text-4xl text-stone-900">Manage Users</h1>
-        <p className="mt-1 text-xs text-stone-500">
+        <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-stone-900 tracking-tight pt-0.5">
+          Manage Users
+        </h1>
+        <p className="mt-0.5 text-xs sm:text-sm text-stone-500">
           View, search, and manage couples, vendors, and admins across WedPlan.
         </p>
       </div>
@@ -388,18 +511,13 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
           {/* Mobile User Cards (< lg) */}
           <div className="grid grid-cols-1 gap-3 lg:hidden">
             {filteredUsers.map((user) => {
-              const initials = (user.name || "U").slice(0, 2).toUpperCase();
-              const joinedDate = user.createdAt
-                ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                : "Member";
+              const joinedDate = formatJoinedDate(user.createdAt);
 
               return (
-                <div key={user.id || user._id || user.email} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
+                <div key={getUserId(user) || user.email} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-2xs space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-stone-100 font-bold text-xs text-stone-600">
-                        {user.image ? <Image src={user.image} alt={user.name || "User"} fill className="object-cover" /> : initials}
-                      </div>
+                      {renderUserAvatar(user, "h-10 w-10")}
                       <div className="min-w-0">
                         <h4 className="font-semibold text-stone-900 text-sm truncate">{user.name || "Unnamed"}</h4>
                         <p className="text-xs text-stone-500 truncate">{user.email}</p>
@@ -443,18 +561,13 @@ export default function ManageUsers({ users = [] }: ManageUsersProps) {
                 </thead>
                 <tbody className="divide-y divide-stone-100">
                   {filteredUsers.map((user) => {
-                    const initials = (user.name || "U").slice(0, 2).toUpperCase();
-                    const joinedDate = user.createdAt
-                      ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
-                      : "Member";
+                    const joinedDate = formatJoinedDate(user.createdAt);
 
                     return (
-                      <tr key={user.id || user._id || user.email} className="hover:bg-stone-50/70 transition-colors">
+                      <tr key={getUserId(user) || user.email} className="hover:bg-stone-50/70 transition-colors">
                         <td className="py-3 pl-4 pr-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-stone-200 bg-stone-100 font-bold text-xs text-stone-600">
-                              {user.image ? <Image src={user.image} alt={user.name || "User"} fill className="object-cover" /> : initials}
-                            </div>
+                            {renderUserAvatar(user, "h-8 w-8")}
                             <span className="font-semibold text-stone-900 truncate max-w-37.5">{user.name || "Unnamed"}</span>
                           </div>
                         </td>

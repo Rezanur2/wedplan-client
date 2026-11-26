@@ -2,7 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/core/server";
 import ManageUsers from "@/components/dashboard/admin/ManageUsers";
-import { getUsers } from "@/lib/api/user";
+import { getAllUsers } from "@/lib/api/user";
 
 export const metadata = {
   title: "Manage Users | Admin Dashboard | WedPlan",
@@ -23,8 +23,8 @@ export default async function ManageUsersPage() {
   }
 
   // Fetch all registered users
-  const data = await getUsers();
-  const userList = Array.isArray(data) ? data : data?.users || [];
+  const data = await getAllUsers();
+  const userList = Array.isArray(data) ? data : [];
 
-  return <ManageUsers users={userList} />;
+  return <ManageUsers users={userList} currentUserId={session.user.id} />;
 }
