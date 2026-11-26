@@ -1,6 +1,9 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { Mail, Phone, MapPin } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
 import Logo from "./Logo";
 
 const navLinks = [
@@ -8,7 +11,7 @@ const navLinks = [
   { name: "Browse Services", href: "/services" },
   { name: "Sign In", href: "/signin" },
   { name: "Create Account", href: "/signup" },
-  { name: "Dashboard", href: "/dashboard/vendor" },
+  { name: "Dashboard", href: "/dashboard" },
 ];
 
 const categoryLinks = [
@@ -25,6 +28,10 @@ const categoryLinks = [
   {
     name: "Makeup & Styling",
     href: "/services?category=Makeup%20%26%20Styling",
+  },
+  {
+    name: "Wedding Fashion",
+    href: "/services?category=Wedding%20Fashion",
   },
 ];
 
@@ -63,7 +70,11 @@ const socialPills = [
 ];
 
 export default function Footer() {
+  const { data: session } = useSession();
   const currentYear = new Date().getFullYear();
+  const visibleNavLinks = session?.user
+    ? navLinks.filter((item) => item.href !== "/signin" && item.href !== "/signup")
+    : navLinks;
 
   return (
     <footer className="border-t border-[#EFE5E9] bg-[#FAF6F7] text-stone-600">
@@ -109,7 +120,7 @@ export default function Footer() {
                 Navigation
               </h3>
               <ul className="mt-4 space-y-2.5 text-xs">
-                {navLinks.map((item) => (
+                {visibleNavLinks.map((item) => (
                   <li key={item.name}>
                     <Link
                       href={item.href}

@@ -19,7 +19,7 @@ export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
   const user = session?.user as IDashboardUser | undefined;
 
   // Show toast when returning from Google OAuth redirect
@@ -67,7 +67,9 @@ export default function Navbar() {
 
         {/* Desktop Auth Controls */}
         <div className="hidden items-center gap-3 md:flex">
-          {user ? (
+          {isPending ? (
+            <div className="h-9 w-16 animate-pulse rounded-full bg-stone-200/80" />
+          ) : user ? (
             <UserDropdown user={user} />
           ) : (
             <>
@@ -89,7 +91,11 @@ export default function Navbar() {
 
         {/* Mobile Header Controls */}
         <div className="flex items-center gap-2 md:hidden">
-          {user && <UserDropdown user={user} />}
+          {isPending ? (
+            <div className="h-9 w-16 animate-pulse rounded-full bg-stone-200/80" />
+          ) : user ? (
+            <UserDropdown user={user} />
+          ) : null}
 
           <button
             type="button"
@@ -123,7 +129,11 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {!user && (
+          {isPending ? (
+            <div className="mt-4 border-t border-stone-200 pt-3 flex flex-col gap-2">
+              <div className="h-9 w-full animate-pulse rounded-md bg-stone-200/80" />
+            </div>
+          ) : !user ? (
             <div className="mt-4 border-t border-stone-200 pt-3 flex flex-col gap-2">
               <Link
                 href="/signin"
@@ -140,7 +150,7 @@ export default function Navbar() {
                 Sign Up
               </Link>
             </div>
-          )}
+          ) : null}
         </div>
       )}
     </header>
