@@ -26,8 +26,8 @@
 
 ### 3. Role-Based Dashboards
 * **Customer Dashboard:** Booking statistics overview, detailed booking table/cards, pending booking cancellation, and profile settings.
-* **Vendor Dashboard:** Studio overview, My Services (availability toggle, edit, delete, filter tabs), Add Service (multi-image ImgBB upload, 3-service Free tier limit), Booking Requests (accept/reject pending inquiries), Subscription upgrade via **Stripe Checkout**, and Profile Settings (syncs vendor details across existing listings).
-* **Admin Dashboard:** Platform overview stats & recent service submissions, Manage Users (search, role filter, role update dropdown, block/unblock with immediate session invalidation), Manage Services (review modal, approve/reject/pause/delete, CSV export), and read-only Platform Transactions ledger.
+* **Vendor Dashboard:** Studio overview, My Services (availability toggle, edit, delete, filter tabs), Add Service (multi-image ImgBB upload, 3-service Free tier limit), Booking Requests (accept/reject pending inquiries), Monthly Premium Subscription (`$49/month` via **Stripe Checkout** with renewal/expiry tracking, period-end cancellation, and recent Payment History), and Profile Settings (syncs vendor details across existing listings).
+* **Admin Dashboard:** Platform overview stats with Total Revenue summary & recent service submissions, Manage Users (search, role filter, role update dropdown, block/unblock with immediate session invalidation), Manage Services (review modal, approve/reject/pause/delete, CSV export), and read-only Platform Transactions ledger (vendor avatars, `Paid`/`Cancelled`/`Pending` status tracking, and Total Revenue card).
 
 ---
 
