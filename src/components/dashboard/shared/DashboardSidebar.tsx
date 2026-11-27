@@ -199,6 +199,11 @@ export function DashboardSidebar({
       router.refresh();
     } catch (error) {
       console.error(error);
+      toast.add({
+        title: "Sign Out Failed",
+        description: "Could not sign out right now. Please try again.",
+        type: "error",
+      });
     }
   };
 

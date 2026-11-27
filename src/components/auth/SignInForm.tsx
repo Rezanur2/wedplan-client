@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import GoogleButton from "@/components/auth/GoogleButton";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "../ui/toast";
+import { queueToast, toast } from "../ui/toast";
 import { useSearchParams } from "next/navigation";
 import { IDashboardUser } from "@/types";
 
@@ -64,7 +64,7 @@ export default function SignInForm() {
 
       formElement.reset();
 
-      toast.add({
+      queueToast({
         title: "Signed In",
         description: `Welcome back, ${data?.user?.name || "User"}!`,
         type: "success",

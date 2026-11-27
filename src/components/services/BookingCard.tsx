@@ -106,7 +106,13 @@ export default function BookingCard({
         }
       } catch (error) {
         console.error("Booking submission error:", error);
-        setErrorMsg("Failed to connect to the server. Please try again.");
+        const errorMessage = "Failed to connect to the server. Please try again.";
+        setErrorMsg(errorMessage);
+        toast.add({
+          title: "Connection Error",
+          description: errorMessage,
+          type: "error",
+        });
       } finally {
         setIsSubmitting(false);
       }

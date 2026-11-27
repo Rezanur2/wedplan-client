@@ -18,6 +18,7 @@ import {
   Mail,
   Building2,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import VendorPlanBanner from "./VendorPlanBanner";
 import { Input } from "@/components/ui/input";
@@ -800,6 +801,9 @@ export default function AddServiceForm({
                 : "bg-[#844353] hover:bg-[#6e3745] cursor-pointer"
             }`}
           >
+            {isSubmitting && (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            )}
             <span>
               {isLimitReached
                 ? "Slot Limit Reached (3/3)"
@@ -807,7 +811,7 @@ export default function AddServiceForm({
                 ? "Submitting..."
                 : "Submit for Review"}
             </span>
-            <ArrowRight className="h-3 w-3" />
+            {!isSubmitting && <ArrowRight className="h-3 w-3" />}
           </button>
         </div>
       </div>

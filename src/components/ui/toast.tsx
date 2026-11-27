@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/button"
 import { XIcon, CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const toast = ToastPrimitive.createToastManager()
+const FLASH_TOAST_KEY = "wedplan_flash_toast"
+
+function queueToast(toastData: Parameters<typeof toast.add>[0]) {
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem(FLASH_TOAST_KEY, JSON.stringify(toastData))
+  }
+}
 
 function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
   return <ToastPrimitive.Provider {...props} />
@@ -172,6 +179,17 @@ function ToastIcon({ type }: { type: string | undefined }) {
 function ToastList() {
   const { toasts } = ToastPrimitive.useToastManager()
 
+  React.useEffect(() => {
+    const savedToast = sessionStorage.getItem(FLASH_TOAST_KEY)
+    if (!savedToast) return
+    sessionStorage.removeItem(FLASH_TOAST_KEY)
+    try {
+      toast.add(JSON.parse(savedToast))
+    } catch {
+      // Ignore malformed flash toast data
+    }
+  }, [])
+
   const getTypeStyles = (type?: string) => {
     switch (type) {
       case "success":
@@ -238,6 +256,7 @@ export {
   ToastTitle,
   ToastViewport,
   createToastManager,
+  queueToast,
   toast,
   useToastManager,
 }
