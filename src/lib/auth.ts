@@ -1,4 +1,5 @@
 import { APIError, betterAuth } from "better-auth";
+import { getOAuthState } from "better-auth/api";
 import { MongoClient, ObjectId } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { jwt } from "better-auth/plugins";
@@ -68,13 +69,26 @@ export const auth = betterAuth({
         user: {
             create: {
                 before: async (newUser) => {
-                    const isCustomer = newUser.role === "customer";
-                    const isVendor = newUser.role === "vendor";
+                    const oauthState = await getOAuthState().catch(() => null);
+                    const oauthRole =
+                        typeof oauthState?.role === "string"
+                            ? oauthState.role.toLowerCase()
+                            : undefined;
+                    const resolvedRole = oauthRole ?? newUser.role;
 
-                    if (!isCustomer && !isVendor) {
+                    if (resolvedRole !== "customer" && resolvedRole !== "vendor") {
                         throw new APIError("FORBIDDEN", {
                             message: "Only customer or vendor accounts can be created.",
                         });
+                    }
+
+                    if (oauthRole) {
+                        return {
+                            data: {
+                                ...newUser,
+                                role: resolvedRole,
+                            },
+                        };
                     }
                 },
             },
