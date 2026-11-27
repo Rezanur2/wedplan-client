@@ -32,21 +32,30 @@ export default function ServiceCard({ service, bookingCount }: ServiceCardProps)
 
   const handleToggleAvailability = async () => {
     const nextValue = !isAvailable;
-    const result = await updateService(serviceId, { isAvailable: nextValue });
+    try {
+      const result = await updateService(serviceId, { isAvailable: nextValue });
 
-    if (result?.modifiedCount > 0 || result?.acknowledged) {
-      setIsAvailable(nextValue);
+      if (result?.modifiedCount > 0 || result?.acknowledged) {
+        setIsAvailable(nextValue);
+        toast.add({
+          title: nextValue ? "Service Active" : "Service Paused",
+          description: nextValue
+            ? "Couples can now book this service."
+            : "This service is now hidden from public search.",
+          type: "success",
+        });
+      } else {
+        toast.add({
+          title: "Update Failed",
+          description: result?.message || "Could not update service availability.",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to toggle availability:", error);
       toast.add({
-        title: nextValue ? "Service Active" : "Service Paused",
-        description: nextValue
-          ? "Couples can now book this service."
-          : "This service is now hidden from public search.",
-        type: "success",
-      });
-    } else {
-      toast.add({
-        title: "Update Failed",
-        description: result?.message || "Could not update service availability.",
+        title: "Connection Error",
+        description: "Could not update service availability. Please try again.",
         type: "error",
       });
     }

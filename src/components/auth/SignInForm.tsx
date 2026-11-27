@@ -85,6 +85,13 @@ export default function SignInForm() {
       window.location.assign(destination);
     } catch (err) {
       console.error(err);
+      const message = "Unable to connect to the server. Please try again.";
+      setError(message);
+      toast.add({
+        title: "Connection Error",
+        description: message,
+        type: "error",
+      });
     } finally {
       if (!isRedirecting) {
         setIsSubmitting(false);

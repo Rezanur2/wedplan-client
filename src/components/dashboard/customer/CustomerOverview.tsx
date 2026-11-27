@@ -53,10 +53,9 @@ export default function CustomerOverview({
   const acceptedBookingsCount = bookings.filter(
     (bookingItem) => (bookingItem.status || "").toLowerCase() === "accepted"
   ).length;
-  const rejectedBookingsCount = bookings.filter((bookingItem) => {
-    const statusText = (bookingItem.status || "").toLowerCase();
-    return statusText === "rejected" || statusText === "cancelled";
-  }).length;
+  const rejectedBookingsCount = bookings.filter(
+    (bookingItem) => (bookingItem.status || "").toLowerCase() === "rejected"
+  ).length;
 
   // Calculate planning progress percentage
   const planningProgressPercentage =
@@ -68,8 +67,8 @@ export default function CustomerOverview({
   const stats = [
     {
       id: "all",
-      title: "Total Inquiries",
-      countText: `${totalBookingsCount} Inquiries`,
+      title: "Total Booking Requests",
+      countText: `${totalBookingsCount} Requests`,
       tagline: "All submitted requests",
       icon: Heart,
       bg: "bg-stone-50",
@@ -79,7 +78,7 @@ export default function CustomerOverview({
     {
       id: "pending",
       title: "Pending Bookings",
-      countText: `${pendingBookingsCount} Waiting`,
+      countText: `${pendingBookingsCount} Pending`,
       tagline: "Awaiting vendor reply",
       icon: Clock,
       bg: "bg-amber-50",
@@ -88,9 +87,9 @@ export default function CustomerOverview({
     },
     {
       id: "accepted",
-      title: "Confirmed Bookings",
-      countText: `${acceptedBookingsCount} Confirmed`,
-      tagline: "Deposit paid & dates locked",
+      title: "Accepted Bookings",
+      countText: `${acceptedBookingsCount} Accepted`,
+      tagline: "Confirmed by vendor",
       icon: CheckCircle2,
       bg: "bg-emerald-50",
       text: "text-emerald-700",
@@ -98,9 +97,9 @@ export default function CustomerOverview({
     },
     {
       id: "rejected",
-      title: "Declined / Cancelled",
-      countText: `${rejectedBookingsCount} Cancelled`,
-      tagline: "Dates unavailable",
+      title: "Rejected Bookings",
+      countText: `${rejectedBookingsCount} Rejected`,
+      tagline: "Declined by vendor",
       icon: XCircle,
       bg: "bg-rose-50",
       text: "text-rose-700",

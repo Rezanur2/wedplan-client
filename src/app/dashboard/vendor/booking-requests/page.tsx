@@ -36,6 +36,7 @@ export default async function BookingRequestsPage({
 
   return (
     <VendorBookingRequests
+      key={filterServiceId || "all"}
       initialBookings={bookings}
       filterServiceId={filterServiceId}
     />

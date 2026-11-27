@@ -544,8 +544,8 @@ export default function ManageUsers({ users = [], currentUserId }: ManageUsersPr
             })}
           </div>
 
-          {/* Desktop Users Table (>= md) */}
-          <div className="hidden md:block overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xs">
+          {/* Desktop Users Table (>= lg) */}
+          <div className="hidden lg:block overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full min-w-180 text-left text-xs">
                 <thead>
@@ -590,7 +590,7 @@ export default function ManageUsers({ users = [], currentUserId }: ManageUsersPr
           </div>
 
           {/* Mobile Count Footer */}
-          <div className="md:hidden text-center text-xs text-stone-500 py-1">
+          <div className="lg:hidden text-center text-xs text-stone-500 py-1">
             Total <strong>{filteredUsers.length}</strong> user(s) displayed
           </div>
         </div>

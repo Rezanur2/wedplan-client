@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { Search, X, CreditCard, Crown } from "lucide-react";
 import { ITransaction } from "@/types";
 import EmptyState from "@/components/dashboard/shared/EmptyState";
@@ -12,7 +12,6 @@ interface AdminTransactionsProps {
 export default function AdminTransactions({
   initialTransactions = [],
 }: AdminTransactionsProps) {
-  const [transactionList] = useState<ITransaction[]>(initialTransactions);
   const [searchQuery, setSearchQuery] = useState("");
 
   const getTransactionRef = (transactionItem: ITransaction) =>
@@ -20,24 +19,6 @@ export default function AdminTransactions({
     transactionItem.stripeSessionId ||
     transactionItem._id ||
     "";
-
-  // Filter transactions by vendor email, plan, or transaction ID
-  const filteredTransactions = useMemo(() => {
-    return transactionList.filter((transactionItem) => {
-      const cleanSearch = searchQuery.toLowerCase().trim();
-      const vendorInfo = `${transactionItem.vendorName || ""} ${transactionItem.vendorEmail || ""}`.toLowerCase();
-      const planName = (transactionItem.plan || "").toLowerCase();
-      const transactionRef = getTransactionRef(transactionItem).toLowerCase();
-
-      if (
-        cleanSearch &&
-        !`${vendorInfo} ${planName} ${transactionRef}`.includes(cleanSearch)
-      ) {
-        return false;
-      }
-      return true;
-    });
-  }, [transactionList, searchQuery]);
 
   // Date formatting helper to eliminate duplicate logic
   const formatTransactionDate = (dateValue?: string | Date) => {
@@ -49,11 +30,44 @@ export default function AdminTransactions({
     });
   };
 
+  // Filter transactions by vendor, email, plan, status, amount, date, or any transaction ID
+  const filteredTransactions = initialTransactions.filter((transactionItem) => {
+    const cleanSearch = searchQuery.toLowerCase().trim();
+    if (!cleanSearch) return true;
+
+    const normalizedSearch = cleanSearch.replace(/^tx:\s*/i, "");
+    const formattedDate = formatTransactionDate(transactionItem.createdAt);
+    const amountText = `$${Number(transactionItem.amount || 0).toFixed(2)}`;
+    const searchableText = [
+      transactionItem.vendorName,
+      transactionItem.vendorEmail,
+      transactionItem.plan,
+      transactionItem.status,
+      transactionItem.currency,
+      amountText,
+      String(transactionItem.amount ?? ""),
+      formattedDate,
+      transactionItem.stripeSubscriptionId,
+      transactionItem.stripeSessionId,
+      transactionItem._id,
+      transactionItem.id,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return (
+      searchableText.includes(cleanSearch) ||
+      (normalizedSearch.length > 0 && searchableText.includes(normalizedSearch))
+    );
+  });
+
   // Reusable vendor identity renderer
   const renderVendorIdentity = (transactionItem: ITransaction) => {
-    const displayLabel =
-      transactionItem.vendorEmail || transactionItem.vendorName || "Vendor Account";
-    const initial = displayLabel.slice(0, 1).toUpperCase();
+    const primaryName =
+      transactionItem.vendorName || transactionItem.vendorEmail || "Vendor Account";
+    const vendorEmail = transactionItem.vendorEmail || "";
+    const initial = primaryName.slice(0, 1).toUpperCase();
     const transactionRef = getTransactionRef(transactionItem);
 
     return (
@@ -62,7 +76,10 @@ export default function AdminTransactions({
           {initial}
         </div>
         <div className="min-w-0">
-          <p className="font-medium text-stone-900 truncate">{displayLabel}</p>
+          <p className="font-medium text-stone-900 truncate">{primaryName}</p>
+          {vendorEmail && vendorEmail !== primaryName && (
+            <p className="text-[11px] text-stone-500 truncate">{vendorEmail}</p>
+          )}
           {transactionRef && (
             <p className="font-mono text-[10px] text-stone-400 truncate" title={transactionRef}>
               TX: {transactionRef}
@@ -72,6 +89,18 @@ export default function AdminTransactions({
       </div>
     );
   };
+
+  // Reusable subscription plan badge helper
+  const renderPlanBadge = (transactionItem: ITransaction, compact = false) => (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full bg-amber-50 font-medium text-amber-800 border border-amber-200 capitalize ${
+        compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-0.5 text-[11px]"
+      }`}
+    >
+      <Crown className="h-3 w-3 text-amber-600" />
+      <span>{transactionItem.plan || "Premium Vendor"}</span>
+    </span>
+  );
 
   // Payment status badge helper
   const renderStatusBadge = (transactionItem: ITransaction) => {
@@ -122,7 +151,7 @@ export default function AdminTransactions({
       </div>
 
       {/* 2. Transactions Content or Empty State */}
-      {transactionList.length === 0 ? (
+      {initialTransactions.length === 0 ? (
         <EmptyState
           icon={CreditCard}
           title="No Transactions Recorded"
@@ -137,7 +166,7 @@ export default function AdminTransactions({
               type="text"
               value={searchQuery}
               onChange={(changeEvent) => setSearchQuery(changeEvent.target.value)}
-              placeholder="Search vendor email, plan, or TX ID..."
+              placeholder="Search vendor, email, plan, status, or TX ID..."
               className="w-full rounded-xl border border-stone-200 bg-white pl-9 pr-8 py-2 text-xs text-stone-900 placeholder:text-stone-400 focus:border-[#844353] focus:outline-none focus:ring-1 focus:ring-[#844353] transition"
             />
             {searchQuery && (
@@ -174,12 +203,7 @@ export default function AdminTransactions({
                       <td className="py-3.5 px-4">{renderVendorIdentity(transactionItem)}</td>
 
                       {/* Subscription Plan */}
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 border border-amber-200">
-                          <Crown className="h-3 w-3 text-amber-600" />
-                          <span>{transactionItem.plan || "Premium Vendor"}</span>
-                        </span>
-                      </td>
+                      <td className="py-3.5 px-4">{renderPlanBadge(transactionItem)}</td>
 
                       {/* Payment Amount */}
                       <td className="py-3.5 px-4 font-semibold text-stone-900">
@@ -220,10 +244,7 @@ export default function AdminTransactions({
                   </div>
 
                   <div className="flex items-center justify-between text-stone-600 border-t border-stone-100 pt-2.5">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-800 border border-amber-200">
-                      <Crown className="h-3 w-3 text-amber-600" />
-                      <span>{transactionItem.plan || "Premium Vendor"}</span>
-                    </span>
+                    {renderPlanBadge(transactionItem, true)}
 
                     <span className="font-semibold text-stone-900 text-sm">
                       ${Number(transactionItem.amount || 0).toFixed(2)}{" "}
