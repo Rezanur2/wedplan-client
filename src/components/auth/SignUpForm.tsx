@@ -20,16 +20,13 @@ import GoogleButton from "@/components/auth/GoogleButton";
 import ProfileImageUpload from "@/components/auth/ProfileImageUpload";
 import PasswordRules from "@/components/auth/PasswordRules";
 import { authClient } from "@/lib/auth-client";
-import { toast } from "../ui/toast";
-import { useRouter } from "next/navigation";
+import { queueToast, toast } from "../ui/toast";
 
 interface SignUpFormProps {
   initialRole?: "customer" | "vendor";
 }
 
 export default function SignUpForm({ initialRole = "customer" }: SignUpFormProps) {
-
-  const router = useRouter();
 
   const [role, setRole] = useState<"customer" | "vendor">(initialRole);
   const [name, setName] = useState("");
@@ -72,6 +69,7 @@ export default function SignUpForm({ initialRole = "customer" }: SignUpFormProps
 
     const formElement = e.currentTarget;
     setIsSubmitting(true);
+    let isRedirecting = false;
 
     try {
       const { data, error } = await authClient.signUp.email({
@@ -98,12 +96,15 @@ export default function SignUpForm({ initialRole = "customer" }: SignUpFormProps
       setPassword("");
       setFileName(null);
 
-      toast.add({
+      queueToast({
         title: "Account Created",
-        description: `Welcome to WedPlan, ${data.user?.name || "Member"}!`,
+        description: `Welcome to WedPlan, ${data?.user?.name || "Member"}!`,
         type: "success",
       });
-      router.push("/signin");
+      const registeredRole = ((data?.user as { role?: string } | undefined)?.role || role).toLowerCase();
+      const destination = registeredRole === "vendor" ? "/dashboard/vendor" : "/dashboard/customer";
+      isRedirecting = true;
+      window.location.assign(destination);
     } catch (err) {
       console.error(err);
       const message = "Unable to connect to the server. Please try again.";
@@ -114,7 +115,9 @@ export default function SignUpForm({ initialRole = "customer" }: SignUpFormProps
         type: "error",
       });
     } finally {
-      setIsSubmitting(false);
+      if (!isRedirecting) {
+        setIsSubmitting(false);
+      }
     }
   };
 
