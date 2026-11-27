@@ -132,7 +132,7 @@ export default function VendorOverview({
         </Link>
       </div>
 
-      {/* 2. Subscription Slot Usage Banner (shown only for free tier) */}
+      {/* 2. Current Subscription Plan Banner */}
       <VendorPlanBanner activeCount={usedServicesCount} isPremium={isPremium} />
 
       {/* 3. Metric Cards */}
