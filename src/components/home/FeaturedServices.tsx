@@ -107,10 +107,10 @@ export default function FeaturedServices({ services }: FeaturedServicesProps) {
           >
             <Link
               href="/services"
-              className="inline-flex items-center gap-2 rounded-xl border border-stone-300 bg-white px-6 py-3 text-xs font-semibold text-stone-800 shadow-2xs hover:border-[#844353] hover:text-[#844353] hover:bg-rose-50/30 transition-all"
+              className="group inline-flex items-center gap-2 rounded-xl bg-[#844353] px-6 py-3 text-xs sm:text-sm font-semibold text-white shadow-sm shadow-[#844353]/20 hover:bg-[#6e3745] hover:shadow-md transition-all"
             >
               <span>Explore All {services.length} Verified Services</span>
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>
         )}
