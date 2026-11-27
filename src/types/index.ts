@@ -102,4 +102,5 @@ export interface ITransaction {
   createdAt?: string | Date;
   vendorName?: string;
   vendorEmail?: string;
+  vendorImage?: string;
 }

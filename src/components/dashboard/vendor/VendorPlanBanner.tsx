@@ -45,7 +45,7 @@ export default function VendorPlanBanner({
             </h2>
             {isPremium ? (
               <span className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                Active Lifetime
+                Monthly Active
               </span>
             ) : (
               <span className="rounded-full bg-pink-100/80 px-2 py-0.5 text-[10px] font-semibold text-pink-700">

@@ -18,7 +18,7 @@ import {
 
 export const metadata = {
   title: "Payment Successful | WedPlan Vendor Studio",
-  description: "Congratulations on upgrading to WedPlan Lifetime Premium Vendor.",
+  description: "Congratulations on upgrading to WedPlan Monthly Premium Vendor.",
 };
 
 export default async function CheckoutSuccessPage({
@@ -126,7 +126,7 @@ export default async function CheckoutSuccessPage({
             <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto">
               Congratulations! Your vendor account is now upgraded to{" "}
               <strong className="text-stone-800 font-semibold">
-                WedPlan Lifetime Premium
+                WedPlan Monthly Premium
               </strong>
               .
             </p>
@@ -149,7 +149,7 @@ export default async function CheckoutSuccessPage({
                 <span className="text-stone-500">Plan</span>
                 <span className="font-semibold text-stone-900 flex items-center gap-1">
                   <Crown className="h-3 w-3 text-amber-500 fill-amber-500" />
-                  Premium Vendor (Lifetime)
+                  Premium Vendor (Monthly)
                 </span>
               </div>
               <div className="flex justify-between items-center">

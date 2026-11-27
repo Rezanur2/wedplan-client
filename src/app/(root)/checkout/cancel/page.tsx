@@ -12,6 +12,9 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { requireRole } from "@/lib/core/server";
+import { markCheckoutCancelled } from "@/lib/actions/payments";
+
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Payment Cancelled | WedPlan Vendor Studio",
@@ -21,6 +24,7 @@ export const metadata = {
 
 export default async function CheckoutCancelPage() {
   await requireRole("vendor");
+  await markCheckoutCancelled();
   return (
     <div className="min-h-[80vh] bg-[#FCFBF9] py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
       <div className="max-w-xl w-full space-y-6">
@@ -69,12 +73,12 @@ export default async function CheckoutCancelPage() {
                 <span className="text-stone-500">Intended Plan</span>
                 <span className="font-semibold text-stone-900 flex items-center gap-1">
                   <Crown className="h-3 w-3 text-amber-500 fill-amber-500" />
-                  Premium Vendor (Lifetime)
+                  Premium Vendor (Monthly)
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-stone-500">Upgrade Price</span>
-                <span className="font-bold text-stone-900">$49.00 USD</span>
+                <span className="font-bold text-stone-900">$49.00 USD / month</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-stone-500">Transaction Status</span>

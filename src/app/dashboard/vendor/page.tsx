@@ -34,9 +34,7 @@ export default async function VendorDashboardPage() {
 
   // 3. Fetch live premium membership status
   const premiumData = await getUserPremiumById(user?.id || "");
-  const isPremium = Boolean(
-    premiumData?.premium || user?.subscriptionPlan?.toLowerCase() === "premium"
-  );
+  const isPremium = Boolean(premiumData?.premium);
 
   return (
     <div className="w-full">

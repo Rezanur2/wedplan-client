@@ -15,6 +15,7 @@ import {
   Eye,
 } from "lucide-react";
 import { IDashboardUser, IVendorService, ITransaction } from "@/types";
+import { getPaidRevenueSummary } from "@/lib/utils";
 import StatCard from "@/components/dashboard/shared/StatCard";
 import EmptyState from "@/components/dashboard/shared/EmptyState";
 
@@ -56,6 +57,7 @@ export default function AdminOverview({
     return status === "pending" || status === "under review";
   }).length;
   const totalTransactionsCount = transactionsList.length;
+  const { totalRevenue } = getPaidRevenueSummary(transactionsList);
 
   // Prioritize pending services first, limit overview preview to 5 items
   const recentServices = [...servicesList]
@@ -133,7 +135,7 @@ export default function AdminOverview({
     {
       title: "Total Transactions",
       value: totalTransactionsCount,
-      description: "Platform subscription payments",
+      description: `Revenue: $${totalRevenue.toFixed(2)} USD`,
       icon: Receipt,
       href: "/dashboard/admin/transactions",
       iconBgColor: "bg-sky-50",

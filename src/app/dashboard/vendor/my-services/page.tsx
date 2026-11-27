@@ -19,9 +19,7 @@ export default async function MyServicesPage() {
     getUserPremiumById(userId),
     userId ? getBookings() : Promise.resolve([]),
   ]);
-  const isPremium = Boolean(
-    premiumData?.premium || session?.user?.subscriptionPlan?.toLowerCase() === "premium"
-  );
+  const isPremium = Boolean(premiumData?.premium);
 
   return (
     <MyServicesList

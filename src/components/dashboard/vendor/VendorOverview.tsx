@@ -439,7 +439,7 @@ export default function VendorOverview({
             </div>
             <div>
               <p className="text-xs font-semibold text-stone-900">Membership Tier</p>
-              <p className="text-[10px] text-stone-400">{isPremium ? "Active Lifetime" : "Upgrade to Unlimited"}</p>
+              <p className="text-[10px] text-stone-400">{isPremium ? "Monthly Active" : "Upgrade to Unlimited"}</p>
             </div>
           </div>
           <ArrowRight className="h-3.5 w-3.5 text-stone-400 group-hover:text-[#844353] transition-colors" />

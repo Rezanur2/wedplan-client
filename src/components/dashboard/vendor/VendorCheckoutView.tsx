@@ -37,7 +37,7 @@ export default function VendorCheckoutView({ user }: VendorCheckoutViewProps) {
       } else {
         toast.add({
           title: "Checkout Error",
-          description: data?.error || "Unable to start Stripe checkout session.",
+          description: data?.error || data?.message || "Unable to start Stripe checkout session.",
           type: "error",
         });
         setIsSubmitting(false);
@@ -102,13 +102,13 @@ export default function VendorCheckoutView({ user }: VendorCheckoutViewProps) {
                     Premium Vendor Membership
                   </h2>
                   <p className="text-xs text-stone-500">
-                    Lifetime Unlimited Access
+                    Monthly Unlimited Access
                   </p>
                 </div>
               </div>
               <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-[10px] font-semibold text-[#844353]">
                 <Sparkles className="h-3 w-3" />
-                One-Time Pass
+                Monthly Plan
               </span>
             </div>
 
@@ -212,10 +212,10 @@ export default function VendorCheckoutView({ user }: VendorCheckoutViewProps) {
                   <span className="text-xs font-bold text-stone-900">
                     Total Due
                   </span>
-                  <p className="text-[10px] text-stone-400">One-time payment</p>
+                  <p className="text-[10px] text-stone-400">Billed monthly • Cancel anytime</p>
                 </div>
                 <span className="font-serif text-2xl font-bold text-[#844353]">
-                  $49.00
+                  $49.00<span className="text-xs font-normal text-stone-400">/mo</span>
                 </span>
               </div>
             </div>
@@ -250,7 +250,7 @@ export default function VendorCheckoutView({ user }: VendorCheckoutViewProps) {
               ) : (
                 <>
                   <Lock className="h-3.5 w-3.5" />
-                  <span>Checkout $49</span>
+                  <span>Subscribe $49/mo</span>
                 </>
               )}
             </button>

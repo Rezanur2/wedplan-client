@@ -1,7 +1,8 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Check,
   Crown,
@@ -13,20 +14,72 @@ import {
   Layers,
   TrendingUp,
   BadgeCheck,
+  Loader2,
+  Receipt,
 } from "lucide-react";
 import DashboardBreadcrumb from "@/components/dashboard/shared/DashboardBreadcrumb";
-import { IDashboardUser } from "@/types";
+import { cancelSubscription } from "@/lib/actions/payments";
+import { toast } from "@/components/ui/toast";
+import { IDashboardUser, ITransaction } from "@/types";
 
 interface SubscriptionPlansProps {
   user?: IDashboardUser | null;
   activeServiceCount?: number;
+  cancelAtPeriodEnd?: boolean;
+  paymentHistory?: ITransaction[];
 }
 
 export default function SubscriptionPlans({
   user,
   activeServiceCount = 0,
+  cancelAtPeriodEnd = false,
+  paymentHistory = [],
 }: SubscriptionPlansProps) {
+  const router = useRouter();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [isCancelScheduled, setIsCancelScheduled] = useState(cancelAtPeriodEnd);
+  const [expiresAt, setExpiresAt] = useState<Date | string | null>(user?.subscriptionExpiresAt || null);
+
+  const formatShortDate = (dateValue?: Date | string | null) => {
+    if (!dateValue) return null;
+    return new Date(dateValue).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   const isPremium = user?.subscriptionPlan?.toLowerCase() === "premium";
+  const formattedExpiryDate = formatShortDate(expiresAt);
+
+  const handleCancelSubscription = async () => {
+    setIsCanceling(true);
+    try {
+      const result = await cancelSubscription();
+      if (result?.success) {
+        setIsCancelScheduled(true);
+        setConfirmCancel(false);
+        if (result.subscriptionExpiresAt) {
+          setExpiresAt(result.subscriptionExpiresAt);
+        }
+        toast.add({
+          title: "Cancellation Scheduled",
+          description: "Your Premium benefits remain active until the end of this billing period.",
+          type: "success",
+        });
+        router.refresh();
+      } else {
+        toast.add({
+          title: "Cancellation Failed",
+          description: result?.message || "Could not cancel subscription.",
+          type: "error",
+        });
+      }
+    } finally {
+      setIsCanceling(false);
+    }
+  };
 
   const freeFeatures = [
     {
@@ -112,15 +165,25 @@ export default function SubscriptionPlans({
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h2 className="text-sm sm:text-base font-bold text-stone-900">
-                    Lifetime Premium Vendor
+                    Monthly Premium Vendor
                   </h2>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                      isCancelScheduled
+                        ? "bg-amber-50 border-amber-200 text-amber-800"
+                        : "bg-emerald-50 border-emerald-200 text-emerald-700"
+                    }`}
+                  >
                     <ShieldCheck className="h-3 w-3" />
-                    Active Plan
+                    {isCancelScheduled ? "Cancels at Period End" : "Active Plan"}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-stone-600 leading-relaxed">
-                  You have unlocked <strong className="font-semibold text-stone-900">unlimited service listings</strong>, verified premium crown badge, and priority search placement.
+                  {formattedExpiryDate
+                    ? isCancelScheduled
+                      ? `Your Premium features stay active until ${formattedExpiryDate}, then revert to Free.`
+                      : `Unlimited service listings and crown badge active. Next renewal on ${formattedExpiryDate}.`
+                    : "You have unlocked unlimited service listings, verified premium crown badge, and priority search placement."}
                 </p>
               </div>
             </div>
@@ -284,7 +347,7 @@ export default function SubscriptionPlans({
 
             <div className="mt-3 flex items-baseline gap-1">
               <span className="font-serif text-2xl sm:text-3xl font-bold text-[#844353]">$49</span>
-              <span className="text-[11px] text-stone-400">/ one-time</span>
+              <span className="text-[11px] text-stone-400">/ month</span>
             </div>
 
             {/* Feature List */}
@@ -315,21 +378,111 @@ export default function SubscriptionPlans({
           {/* Action Button */}
           <div className="mt-5 pt-3 border-t border-stone-100">
             {isPremium ? (
-              <div className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-amber-50 border border-amber-200 py-2 px-3 text-xs font-semibold text-amber-900">
-                <Crown className="h-3.5 w-3.5 text-amber-600 fill-amber-600" />
-                <span>Lifetime Access Active</span>
-              </div>
+              isCancelScheduled ? (
+                <div className="flex items-center justify-center gap-1.5 w-full rounded-xl bg-amber-50 border border-amber-200 py-2 px-3 text-xs font-semibold text-amber-900 text-center">
+                  <Crown className="h-3.5 w-3.5 text-amber-600 shrink-0" />
+                  <span>
+                    {formattedExpiryDate ? `Active until ${formattedExpiryDate}` : "Cancellation Scheduled"}
+                  </span>
+                </div>
+              ) : confirmCancel ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCancelSubscription}
+                    disabled={isCanceling}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-rose-600 py-2 px-3 text-xs font-semibold text-white hover:bg-rose-700 transition cursor-pointer disabled:opacity-60"
+                  >
+                    {isCanceling && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    <span>{isCanceling ? "Canceling..." : "Confirm Cancel"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmCancel(false)}
+                    disabled={isCanceling}
+                    className="rounded-xl border border-stone-200 bg-white py-2 px-3 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition cursor-pointer"
+                  >
+                    Keep Plan
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmCancel(true)}
+                  className="w-full rounded-xl border border-rose-200 bg-rose-50/70 py-2 px-3 text-xs font-semibold text-rose-700 hover:bg-rose-100/70 transition cursor-pointer"
+                >
+                  Cancel Subscription
+                </button>
+              )
             ) : (
               <Link
                 href="/dashboard/vendor/subscription/checkout"
                 className="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#844353] py-2 px-4 text-xs font-semibold text-white shadow-2xs hover:bg-[#6e3745] transition-all cursor-pointer"
               >
-                <span>Upgrade to Premium ($49)</span>
+                <span>Upgrade to Premium ($49/mo)</span>
                 <ArrowRight className="h-3 w-3" />
               </Link>
             )}
           </div>
         </div>
+      </div>
+
+      {/* 4. Recent Payment History */}
+      <div className="rounded-2xl border border-stone-200 bg-white p-4 sm:p-5 shadow-2xs space-y-3">
+        <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div className="flex items-center gap-2">
+            <Receipt className="h-4 w-4 text-[#844353]" />
+            <h2 className="text-sm font-semibold text-stone-900">Payment History</h2>
+          </div>
+          <span className="text-[11px] text-stone-400">Recent activity</span>
+        </div>
+
+        {paymentHistory.length === 0 ? (
+          <p className="py-4 text-center text-xs text-stone-400">
+            No payment attempts recorded yet.
+          </p>
+        ) : (
+          <div className="divide-y divide-stone-100">
+            {paymentHistory.map((paymentItem) => {
+              const paymentStatus = (paymentItem.status || "pending").toLowerCase();
+              const isPaid = paymentStatus === "paid" || paymentStatus === "complete";
+              const isCancelled = paymentStatus === "cancelled" || paymentStatus === "canceled" || paymentStatus === "failed";
+              const badgeStyle = isPaid
+                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                : isCancelled
+                ? "bg-rose-50 text-rose-700 border-rose-200"
+                : "bg-amber-50 text-amber-700 border-amber-200";
+              const statusLabel = isPaid ? "Paid" : isCancelled ? (paymentStatus === "failed" ? "Failed" : "Cancelled") : "Pending";
+              const formattedDate = formatShortDate(paymentItem.createdAt) || "N/A";
+
+              return (
+                <div
+                  key={paymentItem._id || paymentItem.id || `${paymentItem.createdAt}-${paymentStatus}`}
+                  className="flex items-center justify-between gap-3 py-2.5 text-xs"
+                >
+                  <div>
+                    <p className="font-semibold text-stone-800 capitalize">
+                      {paymentItem.plan || "Premium"} Plan (Monthly)
+                    </p>
+                    <p className="text-[11px] text-stone-400">{formattedDate}</p>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className="font-semibold text-stone-900">
+                      ${Number(paymentItem.amount || 0).toFixed(2)}{" "}
+                      <span className="text-[10px] font-normal text-stone-400 uppercase">
+                        {paymentItem.currency || "USD"}
+                      </span>
+                    </span>
+                    <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold ${badgeStyle}`}>
+                      {statusLabel}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

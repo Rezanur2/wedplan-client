@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, X, CreditCard, Crown } from "lucide-react";
+import Image from "next/image";
+import { Search, X, CreditCard, Crown, DollarSign } from "lucide-react";
 import { ITransaction } from "@/types";
+import { getPaidRevenueSummary } from "@/lib/utils";
 import EmptyState from "@/components/dashboard/shared/EmptyState";
 
 interface AdminTransactionsProps {
@@ -13,6 +15,7 @@ export default function AdminTransactions({
   initialTransactions = [],
 }: AdminTransactionsProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const { totalRevenue, paidCount } = getPaidRevenueSummary(initialTransactions);
 
   const getTransactionRef = (transactionItem: ITransaction) =>
     transactionItem.stripeSubscriptionId ||
@@ -72,8 +75,18 @@ export default function AdminTransactions({
 
     return (
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50 border border-rose-100 font-semibold text-xs text-[#844353]">
-          {initial}
+        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-rose-50 border border-rose-100 font-semibold text-xs text-[#844353]">
+          {transactionItem.vendorImage ? (
+            <Image
+              src={transactionItem.vendorImage}
+              alt={primaryName}
+              fill
+              sizes="32px"
+              className="object-cover"
+            />
+          ) : (
+            initial
+          )}
         </div>
         <div className="min-w-0">
           <p className="font-medium text-stone-900 truncate">{primaryName}</p>
@@ -124,6 +137,15 @@ export default function AdminTransactions({
       );
     }
 
+    if (status === "cancelled" || status === "canceled") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 border border-rose-200">
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+          <span>Cancelled</span>
+        </span>
+      );
+    }
+
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200">
         <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -135,19 +157,38 @@ export default function AdminTransactions({
   return (
     <div className="space-y-6 pb-12">
       {/* 1. Header */}
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-rose-50/80 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#844353] whitespace-nowrap shrink-0 shadow-2xs">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#844353]" />
-            Admin Center • Financial Ledger
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-200/80 bg-rose-50/80 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#844353] whitespace-nowrap shrink-0 shadow-2xs">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#844353]" />
+              Admin Center • Financial Ledger
+            </span>
+          </div>
+          <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-stone-900 tracking-tight pt-0.5">
+            Platform Transactions
+          </h1>
+          <p className="mt-0.5 text-xs sm:text-sm text-stone-500">
+            View and monitor all vendor subscription payments.
+          </p>
         </div>
-        <h1 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold text-stone-900 tracking-tight pt-0.5">
-          Platform Transactions
-        </h1>
-        <p className="mt-0.5 text-xs sm:text-sm text-stone-500">
-          View and monitor all vendor subscription payments.
-        </p>
+
+        {/* Total Paid Revenue Card */}
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200/80 bg-white px-4 py-3 shadow-2xs self-start sm:self-auto">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
+            <DollarSign className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-medium text-stone-500">Total Revenue</p>
+            <p className="font-serif text-lg sm:text-xl font-bold text-stone-900 leading-tight">
+              ${totalRevenue.toFixed(2)}{" "}
+              <span className="font-sans text-[11px] font-normal text-stone-400">USD</span>
+            </p>
+            <p className="text-[10px] font-medium text-emerald-700">
+              {paidCount} paid {paidCount === 1 ? "payment" : "payments"}
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* 2. Transactions Content or Empty State */}

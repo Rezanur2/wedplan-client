@@ -17,3 +17,16 @@ export const getAdminTransactions = async (): Promise<ITransaction[]> => {
     return [];
   }
 };
+
+// Get logged-in vendor's own payment history
+export const getMyTransactions = async (): Promise<ITransaction[]> => {
+  try {
+    const api = `${BASE_URL}/transactions/my`;
+    const res = await authFetch(api);
+    if (!res.ok) return [];
+    return await res.json();
+  } catch (error) {
+    console.error("Error fetching vendor payment history:", error);
+    return [];
+  }
+};
