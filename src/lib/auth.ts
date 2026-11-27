@@ -3,8 +3,17 @@ import { MongoClient, ObjectId } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { jwt } from "better-auth/plugins";
 
-const client = new MongoClient(process.env.BETTER_AUTH_DB_URI as string);
+const client = new MongoClient(process.env.BETTER_AUTH_DB_URI as string, {
+    maxPoolSize: 10,
+    minPoolSize: 0,
+    maxIdleTimeMS: 15000,
+    serverSelectionTimeoutMS: 10000,
+});
 const db = client.db('wedplandb');
+
+export async function connectAuthDB() {
+    await client.connect();
+}
 
 export const auth = betterAuth({
     emailAndPassword: {
@@ -86,6 +95,7 @@ export const auth = betterAuth({
         session: {
             create: {
                 before: async (newSession) => {
+                    if (!ObjectId.isValid(newSession.userId)) return;
                     const userId = new ObjectId(newSession.userId);
                     const userRecord = await db.collection("user").findOne({ _id: userId });
 

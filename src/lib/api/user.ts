@@ -1,6 +1,6 @@
 'use server'
 import { headers } from "next/headers";
-import { auth } from "../auth";
+import { auth, connectAuthDB } from "../auth";
 import { IDashboardUser } from "@/types";
 import { authFetch } from "../core/server";
 
@@ -8,6 +8,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000"
 
 // Fetch All Users with JWT Authentication
 export async function getAllUsers(): Promise<IDashboardUser[]> {
+  await connectAuthDB();
   const jwtToken = await auth.api.getToken({ headers: await headers() });
   if (!jwtToken?.token) {
     throw new Error("No session found");

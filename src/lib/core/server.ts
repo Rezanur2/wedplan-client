@@ -1,10 +1,11 @@
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { auth, connectAuthDB } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
 
 export const getSession = async () => {
     "use server";
+    await connectAuthDB();
     const session = await auth.api.getSession({
         headers: await headers(),
         query: { disableCookieCache: true },
@@ -17,6 +18,7 @@ export const getToken = async () => {
     if (!session) {
         redirect("/signin");
     }
+    await connectAuthDB();
     const requestHeaders = await headers();
     const tokenResponse = await auth.api.getToken({
         headers: requestHeaders,
